@@ -20,7 +20,8 @@ optional arguments:
   -t TYPE, --type TYPE  type of extractor [music|sound]
 ```
 
-```python analyze.py -i input_audio.mp3 -o result.json -t sound
+Example:
 ```
-
+python analyze.py -i input_audio.mp3 -o result.json -t sound
+```
 
