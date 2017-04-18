@@ -1,3 +1,3 @@
 FROM mtgupf/essentia
 ADD analyze.py /
-CMD [ "python", "./analyze.py" ]
+ENTRYPOINT [ "python", "/analyze.py" ]
