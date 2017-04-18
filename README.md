@@ -56,3 +56,4 @@ python analyze.py -i input_audio.mp3 -o result.json -t sound
 
 ### Tonality
 - ```ac:hpcp```: harmonic pitch class profile ([HPCP](http://essentia.upf.edu/documentation/reference/std_HPCP.html)) measuring the relative intensity of each of the 12 pitch classes of the equal-tempered scale.
+- ```ac:tonality```: [key and scale](http://essentia.upf.edu/documentation/reference/std_Key.html) estimate based on HPCP descriptor and "Krumhansl" key detection profile which should work generally fine for pop music. 
