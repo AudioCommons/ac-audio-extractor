@@ -6,7 +6,7 @@ Using Essentia library: http://essentia.upf.edu
 
 ## Example usage
 ```
-usage: analyze.py [-h] -i INPUT -o OUTPUT -t TYPE
+usage: analyze.py [-h] -i INPUT -o OUTPUT
 
 AudioCommons audio extractor. Analyzes a given audio file and writes results
 to a json file.
@@ -17,12 +17,11 @@ optional arguments:
                         input audio file
   -o OUTPUT, --output OUTPUT
                         output json file
-  -t TYPE, --type TYPE  type of extractor [music|sound]
 ```
 
 Example:
 ```
-python analyze.py -i input_audio.mp3 -o result.json -t sound
+python analyze.py -i input_audio.mp3 -o result.json
 ```
 
 ## Using a Docker image
@@ -31,14 +30,9 @@ Build an image from the root directory (containing Dockerimage file):
 docker build -t audiocommons/ac-audio-extractor .
 ```
 
-Analyze music from an audio file in the current directory: 
-```
-docker run -it --rm -v `pwd`:/essentia audiocommons/ac-audio-extractor -i audio.wav -o audio.json -t music
-```
-
 Analyze sound from an audio file in the current directory:
 ```
-docker run -it --rm -v `pwd`:/essentia audiocommons/ac-audio-extractor -i audio.wav -o audio.json -t sound
+docker run -it --rm -v `pwd`:/essentia audiocommons/ac-audio-extractor -i audio.wav -o audio.json
 ```
 
 ## Audio descriptors
