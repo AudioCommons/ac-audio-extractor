@@ -38,6 +38,7 @@ ac_mapping = {
 
 
 def midi_note_to_note(midi_note):
+    # Use convention MIDI value 69 = 440.0 Hz = A4
     note = midi_note % 12
     octave = midi_note / 12
     return '%s%i' % (['C', 'C#', 'D', 'D#', 'E', 'E#', 'F', 'F#', 'G', 'A', 'A#', 'B'][note], octave - 1)
