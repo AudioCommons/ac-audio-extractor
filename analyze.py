@@ -12,11 +12,11 @@ ac_mapping = {
     "ac:bitrate": "metadata.audio_properties.bit_rate",
     "ac:samplerate": "metadata.audio_properties.sample_rate",
     "ac:channels": "metadata.audio_properties.number_channels",
-    "ac:audio_md5": "metadata.md5_encoded",
-    "ac:loudness": "loudness_ebu128.integrated",  # Other candidates: average_loudness, metadata.replay_gain
-    "ac:dynamic_range": "loudness_ebu128.loudness_range",
-    "ac_temporal_centroid": "sfx.temporal_centroid.mean",
-    "ac:log_attack_time": "sfx.logattacktime.mean",
+    "ac:audio_md5": "metadata.audio_properties.md5_encoded",
+    "ac:loudness": "lowlevel.loudness_ebu128.integrated",  # Other candidates: average_loudness, metadata.replay_gain
+    "ac:dynamic_range": "lowlevel.loudness_ebu128.loudness_range",
+    "ac:temporal_centroid": "sfx.temporal_centroid",
+    "ac:log_attack_time": "sfx.logattacktime",
     
     # Not yet implemented descriptors
     # ac:format - not yet implemented, can be implemented in Essentia's AudioLoader
@@ -49,7 +49,7 @@ def frequency_to_midi_note(frequency):
 def analyze(audiofile, jsonfile):
 
     # Compute descriptors
-    pool, poolFrames = FreesoundExtractor()(audiofile)
+    pool, _ = FreesoundExtractor()(audiofile)
    
     # Rename according to AudioCommons schema
     result_pool = Pool()
