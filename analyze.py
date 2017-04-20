@@ -42,6 +42,8 @@ def midi_note_to_note(midi_note):
     octave = midi_note / 12
     return '%s%i' % (['C', 'C#', 'D', 'D#', 'E', 'E#', 'F', 'F#', 'G', 'A', 'A#', 'B'][note], octave - 1)
 
+def frequency_to_midi_note(frequency):
+    return int(69 + (12 * math.log(frequency / 440.0)) / math.log(2))
 
 def analyze(audiofile, jsonfile):
 
@@ -60,7 +62,7 @@ def analyze(audiofile, jsonfile):
     result_pool.set("ac:filesize", os.stat(audiofile).st_size)
     
     pitch_frequency = float(pool['lowlevel.pitch.median'])
-    midi_note = int(69 + (12 * math.log(pitch_frequency / 440.0)) / math.log(2))
+    midi_note = frequency_to_midi_note(pitch_frequency)
     result_pool.set("ac:midi_note", midi_note)
     result_pool.set("ac:note", midi_note_to_note(midi_note))
     # TODO: no sense to compute note from pitch mean/median,
