@@ -73,7 +73,7 @@ def analyze(audiofile, jsonfile):
     key = pool['tonal.key_krumhansl.key'] + " " + pool['tonal.key_krumhansl.scale']
     result_pool.set("ac:tonality", key)  # TODO: add tonal.key_krumhansl.strength
 
-    tempo = int(pool['rhythm.bpm'])  # TODO: use percival's method and add confidence
+    tempo = int(round(pool['rhythm.bpm']))  # TODO: use percival's method and add confidence
     result_pool.set("ac:tempo", tempo)
 
     YamlOutput(filename=jsonfile, doubleCheck=True, format="json", writeVersion=False)(result_pool)
