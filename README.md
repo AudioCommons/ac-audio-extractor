@@ -1,41 +1,27 @@
 # AudioCommons audio extractor for music samples
 
-Command-line extractor for audio descriptors compliant with AudioCommons schema.
-
-Using Essentia library: http://essentia.upf.edu
-
-## Example usage
-```
-usage: analyze.py [-h] -i INPUT -o OUTPUT
-
-AudioCommons audio extractor. Analyzes a given audio file and writes results
-to a json file.
-
-optional arguments:
-  -h, --help            show this help message and exit
-  -i INPUT, --input INPUT
-                        input audio file
-  -o OUTPUT, --output OUTPUT
-                        output json file
-```
-
-Example:
-```
-python analyze.py -i input_audio.mp3 -o result.json
-```
-
-## Using a Docker image
 Build an image from the root directory (containing Dockerimage file):
+
 ```
 docker build -t audiocommons/ac-audio-extractor .
 ```
 
 Analyze sound from an audio file in the current directory:
+
 ```
-docker run -it --rm -v `pwd`:/essentia audiocommons/ac-audio-extractor -i audio.wav -o audio.json
+docker run -it --rm -v `pwd`:/tmp audiocommons/ac-audio-extractor -i /tmp/audio.wav -o /tmp/analysis.json
 ```
 
-## Included descriptors
+The example above mounts the current directory ``pwd`` in the virtual `tmp` directory inside Docker. The output file `audio.json` is also written in `tmp`, and therefore appears in the current directory. You can also mount different volumes and specify paths for input audio and analysis output like this:
+
+```
+docker run -it --rm -v /local/path/to/your/audio/file.wav:/audio.wav -v /local/path/to/output_directory/:/outdir audiocommons/ac-audio-extractor -i /audio.wav -o /outdir/analysis.json
+```
+
+See how Docker volumes work for more information.
+
+
+## Included descriptors (TODO: update that)
 
 ### Audio file properties
 - ```ac:duration```: duration of audio file (sec.)
