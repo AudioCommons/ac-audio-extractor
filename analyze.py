@@ -4,8 +4,13 @@ import json
 import math
 import numpy as np
 import essentia
+import logging
 from argparse import ArgumentParser
 from essentia.standard import FreesoundExtractor, YamlOutput, LoopBpmConfidence, PercivalBpmEstimator, EasyLoader, PitchContourSegmentation, PredominantPitchMelodia
+
+
+logger = logging.getLogger()
+
 
 ac_mapping = {
     "ac:duration": "metadata.audio_properties.length",
@@ -22,6 +27,8 @@ ac_mapping = {
 }
 
 def run_freesound_extractor(audiofile):
+    logger.debug('{0}: running Freesound Extractor'.format(audiofile))
+
     # Disable Essentia logging and run extractor
     essentia.log.infoActive = False
     essentia.log.warningActive = False
@@ -30,6 +37,8 @@ def run_freesound_extractor(audiofile):
 
 
 def ac_general_description(audiofile, fs_pool, ac_descriptors):
+    logger.debug('{0}: adding basic AudioCommons descriptors'.format(audiofile))
+
     # Add Audio Commons descriptors from the fs_pool
     for ac_name, essenia_name in ac_mapping.items():
         if fs_pool.containsKey(essenia_name):
@@ -39,6 +48,8 @@ def ac_general_description(audiofile, fs_pool, ac_descriptors):
 
 
 def ac_tempo_description(audiofile, fs_pool, ac_descriptors):
+    logger.debug('{0}: adding tempo descriptors'.format(audiofile))
+
     tempo = int(round(fs_pool['rhythm.bpm']))
     tempo_confidence = fs_pool['rhythm.bpm_confidence'] / 5.0  # Normalize BPM confidence value
     if tempo_confidence < 0.0:
@@ -53,12 +64,15 @@ def ac_tempo_description(audiofile, fs_pool, ac_descriptors):
 
 
 def ac_key_description(audiofile, fs_pool, ac_descriptors):
+    logger.debug('{0}: adding tonality descriptors'.format(audiofile))
+
     key = fs_pool['tonal.key_edma.key'] + " " + fs_pool['tonal.key_edma.scale']
     ac_descriptors["ac:tonality"] = key
     ac_descriptors["ac:tonality_confidence"] = fs_pool['tonal.key_edma.strength']
     
 
 def ac_pitch_description(audiofile, fs_pool, ac_descriptors):
+    logger.debug('{0}: adding pitch descriptors'.format(audiofile))
 
     def midi_note_to_note(midi_note):
         # Use convention MIDI value 69 = 440.0 Hz = A4
@@ -68,7 +82,7 @@ def ac_pitch_description(audiofile, fs_pool, ac_descriptors):
 
     def frequency_to_midi_note(frequency):
         return int(69 + (12 * math.log(frequency / 440.0)) / math.log(2))
-
+    
     pitch_median = float(fs_pool['lowlevel.pitch.median'])
     midi_note = frequency_to_midi_note(pitch_median)
     note_name = midi_note_to_note(midi_note)
@@ -79,25 +93,27 @@ def ac_pitch_description(audiofile, fs_pool, ac_descriptors):
 
 
 def ac_timbral_models(audiofile, fs_pool, ac_descriptors):
+    logger.debug('{0}: computing timbral models'.format(audiofile))
+
     # TODO: update to latest version of timbral descriptors: https://github.com/AudioCommons/timbral_models/issues/5#issuecomment-376178206
     from timbral_models import timbral_brightness, timbral_depth, timbral_hardness, timbral_metallic, timbral_reverb, timbral_roughness
     for name, function in [
-        ('perceptual.ac:brightness', timbral_brightness), 
-        ('perceptual.ac:depth', timbral_depth), 
-        ('perceptual.ac:hardness', timbral_hardness), 
-        ('perceptual.ac:metallic', timbral_metallic), 
-        ('perceptual.ac:reverb', timbral_reverb), 
-        ('perceptual.ac:roughness', timbral_roughness)
+        ('ac:brightness', timbral_brightness), 
+        ('ac:depth', timbral_depth), 
+        ('ac:hardness', timbral_hardness), 
+        ('ac:metallic', timbral_metallic), 
+        ('ac:reverb', timbral_reverb), 
+        ('ac:roughness', timbral_roughness)
     ]:
         try:
             value = function(audiofile)
         except Exception as e:
-            print('{0} failed to compute'.format(str(function)))
-            print(e)
+            logger.debug('{0}: analysis failed ({1}, "{2}")'.format(audiofile, function, e))
             value = 0
         ac_descriptors[name] = value
 
-def analyze(audiofile, jsonfile):
+def analyze(audiofile, jsonfile, compute_timbral_models=False):
+    logger.info('{0}: starting analysis'.format(audiofile))
 
     # Get initial descriptors from Freesound Extractor
     fs_pool = run_freesound_extractor(audiofile)
@@ -108,19 +124,23 @@ def analyze(audiofile, jsonfile):
     ac_key_description(audiofile, fs_pool, ac_descriptors)
     ac_tempo_description(audiofile, fs_pool, ac_descriptors)
     ac_pitch_description(audiofile, fs_pool, ac_descriptors)
-    #ac_timbral_models(audiofile, fs_pool, ac_descriptors)
+    if compute_timbral_models:
+        ac_timbral_models(audiofile, fs_pool, ac_descriptors)
 
-    print('Done with analysis of {0}!'.format(audiofile))
-    json.dump(ac_descriptors, open(jsonfile, 'w'))
+    logger.info('{0}: analysis finished'.format(audiofile))
+    json.dump(ac_descriptors, open(jsonfile, 'w'), indent=4)
 
     
 if __name__ == '__main__':
     parser = ArgumentParser(description="""
-    AudioCommons audio extractor. Analyzes a given audio file and writes results to a json file.
+    AudioCommons audio extractor (v2). Analyzes a given audio file and writes results to a JSON file.
     """)
-
+    parser.add_argument('-v', '--verbose', help='if set prints more info on screen', action='store_const', const=True, default=False)
+    parser.add_argument('-t', '--timbral_models', help='if set, compute timbral models as well', action='store_const', const=True, default=False)
     parser.add_argument('-i', '--input', help='input audio file', required=True)
     parser.add_argument('-o', '--output', help='output json file', required=True)
+    
     args = parser.parse_args()
-    analyze(args.input, args.output)
+    logging.basicConfig(format='%(asctime)s %(levelname)s:%(message)s', level=logging.INFO if not args.verbose else logging.DEBUG)
+    analyze(args.input, args.output, args.timbral_models)
     

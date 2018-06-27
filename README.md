@@ -12,13 +12,31 @@ Analyze sound from an audio file in the current directory:
 docker run -it --rm -v `pwd`:/tmp audiocommons/ac-audio-extractor -i /tmp/audio.wav -o /tmp/analysis.json
 ```
 
-The example above mounts the current directory ``pwd`` in the virtual `tmp` directory inside Docker. The output file `audio.json` is also written in `tmp`, and therefore appears in the current directory. You can also mount different volumes and specify paths for input audio and analysis output like this:
+The example above mounts the current directory ``pwd`` in the virtual `tmp` directory inside Docker. The output file `audio.json` is also written in `tmp`, and therefore appears in the current directory. You can also mount different volumes and specify paths for input audio and analysis output like this (for more information, checkout [Docker volumes](https://docs.docker.com/storage/volumes/)):
 
 ```
 docker run -it --rm -v /local/path/to/your/audio/file.wav:/audio.wav -v /local/path/to/output_directory/:/outdir audiocommons/ac-audio-extractor -i /audio.wav -o /outdir/analysis.json
 ```
 
-See how Docker volumes work for more information.
+Run help command to learn about available options:
+
+```
+docker run -it --rm -v `pwd`:/tmp audiocommons/ac-audio-extractor --help
+
+usage: analyze.py [-h] -i INPUT -o OUTPUT [-v]
+
+AudioCommons audio extractor. Analyzes a given audio file and writes results
+to a json file.
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -i INPUT, --input INPUT
+                        input audio file
+  -o OUTPUT, --output OUTPUT
+                        output json file
+  -v, --verbose         if set prints more info on screen
+```
+
 
 
 ## Included descriptors (TODO: update that)
