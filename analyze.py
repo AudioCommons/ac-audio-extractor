@@ -135,11 +135,15 @@ def render_jsonld_output(ac_descriptors):
     MO = Namespace("http://musicontology.com/")
     DC = Namespace("http://purl.org/dc/terms/")
     response = BNode()
+    
+
     sound = URIRef("http://ac/sound/1234")
     for key, value in ac_descriptors.items():
         g.add((sound, AC[key], Literal(value)))
-
     g.add((response, AC['singal_features'], sound))
+
+
+    g.add((response, AC['duration'], Literal(123.5)))
 
     
 
