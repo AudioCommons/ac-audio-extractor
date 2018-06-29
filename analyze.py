@@ -13,17 +13,17 @@ from essentia.standard import MusicExtractor, FreesoundExtractor, YamlOutput, Lo
 logger = logging.getLogger()
 
 ac_mapping = {
-    "ac:duration": "metadata.audio_properties.length",
-    "ac:lossless": "metadata.audio_properties.lossless",
-    "ac:codec": "metadata.audio_properties.codec",
-    "ac:bitrate": "metadata.audio_properties.bit_rate",
-    "ac:samplerate": "metadata.audio_properties.sample_rate",
-    "ac:channels": "metadata.audio_properties.number_channels",
-    "ac:audio_md5": "metadata.audio_properties.md5_encoded",
-    "ac:loudness": "lowlevel.loudness_ebu128.integrated",
-    "ac:dynamic_range": "lowlevel.loudness_ebu128.loudness_range",
-    "ac:temporal_centroid": "sfx.temporal_centroid",
-    "ac:log_attack_time": "sfx.logattacktime",
+    "duration": "metadata.audio_properties.length",
+    "lossless": "metadata.audio_properties.lossless",
+    "codec": "metadata.audio_properties.codec",
+    "bitrate": "metadata.audio_properties.bit_rate",
+    "samplerate": "metadata.audio_properties.sample_rate",
+    "channels": "metadata.audio_properties.number_channels",
+    "audio_md5": "metadata.audio_properties.md5_encoded",
+    "loudness": "lowlevel.loudness_ebu128.integrated",
+    "dynamic_range": "lowlevel.loudness_ebu128.loudness_range",
+    "temporal_centroid": "sfx.temporal_centroid",
+    "log_attack_time": "sfx.logattacktime",
 }
 
 def run_freesound_extractor(audiofile):
@@ -41,7 +41,7 @@ def ac_general_description(audiofile, fs_pool, ac_descriptors):
         if fs_pool.containsKey(essenia_name):
             value = fs_pool[essenia_name]
             ac_descriptors[ac_name] = value
-    ac_descriptors["ac:filesize"] = os.stat(audiofile).st_size
+    ac_descriptors["filesize"] = os.stat(audiofile).st_size
 
 
 def ac_tempo_description(audiofile, fs_pool, ac_descriptors):
@@ -53,10 +53,10 @@ def ac_tempo_description(audiofile, fs_pool, ac_descriptors):
         tempo_confidence = 0.0
     elif tempo_confidence > 1.0:
         tempo_confidence = 1.0
-    ac_descriptors["ac:tempo"] = tempo
-    ac_descriptors["ac:tempo_confidence"] = tempo_confidence
-    ac_descriptors["ac:tempo_loop"] = int(round(fs_pool['rhythm.bpm_loop']))
-    ac_descriptors["ac:tempo_loop_confidence"] = fs_pool['rhythm.bpm_loop_confidence.mean']
+    ac_descriptors["tempo"] = tempo
+    ac_descriptors["tempo_confidence"] = tempo_confidence
+    ac_descriptors["tempo_loop"] = int(round(fs_pool['rhythm.bpm_loop']))
+    ac_descriptors["tempo_loop_confidence"] = fs_pool['rhythm.bpm_loop_confidence.mean']
     return ac_descriptors
 
 
@@ -64,8 +64,8 @@ def ac_key_description(audiofile, fs_pool, ac_descriptors):
     logger.debug('{0}: adding tonality descriptors'.format(audiofile))
 
     key = fs_pool['tonal.key_edma.key'] + " " + fs_pool['tonal.key_edma.scale']
-    ac_descriptors["ac:tonality"] = key
-    ac_descriptors["ac:tonality_confidence"] = fs_pool['tonal.key_edma.strength']
+    ac_descriptors["tonality"] = key
+    ac_descriptors["tonality_confidence"] = fs_pool['tonal.key_edma.strength']
     
 
 def ac_pitch_description(audiofile, fs_pool, ac_descriptors):
@@ -83,10 +83,10 @@ def ac_pitch_description(audiofile, fs_pool, ac_descriptors):
     pitch_median = float(fs_pool['lowlevel.pitch.median'])
     midi_note = frequency_to_midi_note(pitch_median)
     note_name = midi_note_to_note(midi_note)
-    ac_descriptors["ac:note_midi"] = midi_note
-    ac_descriptors["ac:note_name"] = note_name
-    ac_descriptors["ac:note_frequency"] = pitch_median
-    ac_descriptors["ac:note_confidence"] = float(fs_pool['lowlevel.pitch_instantaneous_confidence.median'])
+    ac_descriptors["note_midi"] = midi_note
+    ac_descriptors["note_name"] = note_name
+    ac_descriptors["note_frequency"] = pitch_median
+    ac_descriptors["note_confidence"] = float(fs_pool['lowlevel.pitch_instantaneous_confidence.median'])
 
 
 def ac_timbral_models(audiofile, ac_descriptors):
@@ -95,12 +95,12 @@ def ac_timbral_models(audiofile, ac_descriptors):
     # TODO: update to latest version of timbral descriptors: https://github.com/AudioCommons/timbral_models/issues/5#issuecomment-376178206
     from timbral_models import timbral_brightness, timbral_depth, timbral_hardness, timbral_metallic, timbral_reverb, timbral_roughness
     for name, function in [
-        ('ac:brightness', timbral_brightness), 
-        ('ac:depth', timbral_depth), 
-        ('ac:hardness', timbral_hardness), 
-        ('ac:metallic', timbral_metallic), 
-        ('ac:reverb', timbral_reverb), 
-        ('ac:roughness', timbral_roughness)
+        ('brightness', timbral_brightness), 
+        ('depth', timbral_depth), 
+        ('hardness', timbral_hardness), 
+        ('metallic', timbral_metallic), 
+        ('reverb', timbral_reverb), 
+        ('roughness', timbral_roughness)
     ]:
         try:
             value = function(audiofile)
@@ -113,8 +113,8 @@ def ac_timbral_models(audiofile, ac_descriptors):
 def ac_highlevel_music_description(audiofile, ac_descriptors):
     logger.debug('{0}: running Essentia\'s MusicExtractor'.format(audiofile))
     me_pool, _ = MusicExtractor(profile='music_extractor_profile.yaml')(audiofile)
-    ac_descriptors["ac:genre"] = me_pool['highlevel.genre_test.value']
-    ac_descriptors["ac:mood"] = me_pool['highlevel.mood_test.value']
+    ac_descriptors["genre"] = me_pool['highlevel.genre_test.value']
+    ac_descriptors["mood"] = me_pool['highlevel.mood_test.value']
 
 
 def render_jsonld_output(ac_descriptors):
@@ -134,14 +134,14 @@ def render_jsonld_output(ac_descriptors):
     AC = Namespace("http://audiocommons.org/vocab/")
     MO = Namespace("http://musicontology.com/")
     DC = Namespace("http://purl.org/dc/terms/")
-    response_stats = BNode()
-    g.add((response_stats, RDF.type, AC.AggregatedResponseStats))
-    g.add((response_stats, AC.sent_timestamp, Literal("2016-12-22 16:58:55.128886")))
-    g.add((response_stats, AC.current_timestamp, Literal("2016-12-22 16:58:55.158931")))
-    g.add((response_stats, AC.n_received_responses, Literal(5)))  # Add 1 for simulated error response
-    g.add((response_stats, AC.response_status, Literal("FI")))
-    g.add((response_stats, AC.response_id, Literal("9097e3bb-2cc8-4f99-89ec-2dfbe1739e67")))
-    g.add((response_stats, AC.collect_url, Literal("https://m.audiocommons.org/api/v1/collect/?rid=9097e3bb-2cc8-4f99-89ec-2dfbe1739e67")))
+    response = BNode()
+    sound = URIRef("http://ac/sound/1234")
+    for key, value in ac_descriptors.items():
+        g.add((sound, AC[key], Literal(value)))
+
+    g.add((response, AC['singal_features'], sound))
+
+    
 
     context = {
         "rdf": str(RDF),  #  This might not be needed if we only use RDF.type
@@ -168,9 +168,9 @@ def render_jsonld_output(ac_descriptors):
       },
     }
     '''
-    frame = {"@type": str(AC.AggregatedResponse)}  # Apparently just by indicating the frame like this it already builds the desired output
+    #frame = {"@type": str(AC.AggregatedResponse)}  # Apparently just by indicating the frame like this it already builds the desired output
     jsonld = g.serialize(format='json-ld', context=context).decode() # this gives us direct triple representation in a compact form
-    jsonld = pyld.jsonld.frame(jsonld, frame, options={"documentLoader":dlfake}) # this "frames" the JSON-LD doc but it also expands it (writes out full URIs)
+    #jsonld = pyld.jsonld.frame(jsonld, frame, options={"documentLoader":dlfake}) # this "frames" the JSON-LD doc but it also expands it (writes out full URIs)
     jsonld = pyld.jsonld.compact(jsonld, context, options={"documentLoader":dlfake}) # so we need to compact it again (turn URIs into CURIEs)
     return jsonld
 
