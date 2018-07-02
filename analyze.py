@@ -117,69 +117,70 @@ def ac_highlevel_music_description(audiofile, ac_descriptors):
     ac_descriptors["mood"] = me_pool['highlevel.mood_test.value']
 
 
-def render_jsonld_output(ac_descriptors):
+def render_jsonld_output(ac_descriptors, uri=None):
     # NOTE: this is a fake implementation that renders arbitrary JSON-LD data
 
     import rdflib,pyld
     from rdflib import Graph, URIRef, BNode, Literal, Namespace, plugin
     from rdflib.serializer import Serializer
-    from rdflib.namespace import RDF, FOAF
+    from rdflib.namespace import RDF
     from pprint import pprint
 
     def dlfake(input):
         '''This is to avoid a bug in PyLD (should be easy to fix and avoid this hack really..)'''
         return {'contextUrl': None,'documentUrl': None,'document': input}
 
-    g = Graph()
+    # TODO: check that these URLs are ok
     AC = Namespace("http://audiocommons.org/vocab/")
-    MO = Namespace("http://musicontology.com/")
-    DC = Namespace("http://purl.org/dc/terms/")
-    response = BNode()
-    
-
-    sound = URIRef("http://ac/sound/1234")
-    for key, value in ac_descriptors.items():
-        g.add((sound, AC[key], Literal(value)))
-    g.add((response, AC['singal_features'], sound))
-
-
-    g.add((response, AC['duration'], Literal(123.5)))
-
-    
+    AFO = Namespace("http://motools.sourceforge.net/doc/audio_features.html#")
+    AFV = Namespace("http://motools.sourceforge.net/doc/?#")
+    EBU = Namespace("https://www.ebu.ch/metadata/ontologies/ebucore/index.html#")
 
     context = {
-        "rdf": str(RDF),  #  This might not be needed if we only use RDF.type
+        "rdf": str(RDF),
         "ac": str(AC),
-        "mo": str(MO),
-        "dc": str(DC),
+        "afo": str(AFO),
+        "afv": str(AFV),
+        "ebucore": str(EBU),
     }
 
-    '''
-    frame = {
-      #"@context": context,  # I think this is not needed
-      "@type": str(AC.AggregatedResponse),
-      str(AC.stats): {
-        "@type": str(AC.AggregatedResponseStats),
-      },
-      str(AC.contents): {
-        "@type": str(AC.IndividualResponse),
-      },
-      str(AC.errors): {
-        "@type": str(AC.IndividualErrorResponse),
-      },
-      str(AC.warnings): {
-        "@type": str(AC.IndividualWarningsResponse),
-      },
-    }
-    '''
-    #frame = {"@type": str(AC.AggregatedResponse)}  # Apparently just by indicating the frame like this it already builds the desired output
+    g = Graph()
+    
+    if uri is None:
+        analysisOutput = BNode()
+    else:
+        analysisOutput = URIRef(uri)
+    g.add((analysisOutput, RDF['type'], AC['AnalysisOutput']))
+    g.add((analysisOutput, AC['duration'], Literal(ac_descriptors['duration'])))
+
+    audioFile = BNode()
+    g.add((audioFile, RDF['type'], AC['AudioFile']))
+    g.add((audioFile, EBU['bitrate'], Literal(ac_descriptors['bitrate'])))
+    g.add((audioFile, EBU['filesize'], Literal(ac_descriptors['filesize'])))
+    g.add((audioFile, EBU['hasCodec'], Literal(ac_descriptors['codec'])))
+    g.add((analysisOutput, AC['availableAs'], audioFile))
+
+    digitalSignal = BNode()
+    g.add((digitalSignal, RDF['type'], AC['DigitalSignal']))
+    g.add((digitalSignal, AC['samplerate'], Literal(ac_descriptors['samplerate'])))
+    g.add((digitalSignal, AC['channels'], Literal(ac_descriptors['channels'])))
+    g.add((digitalSignal, AC['lossless'], Literal(True if ac_descriptors['lossless'] else False)))
+    for key, value in ac_descriptors.items(): # TODO: properly iterate over relevant descriptors only
+        signalFeature = BNode()
+        g.add((signalFeature, RDF['type'], AFV[key]))
+        g.add((signalFeature, AFO['value'], Literal(value)))
+        g.add((signalFeature, AFO['confidence'], Literal(0.0)))
+        g.add((digitalSignal, AC['signal_feature'], signalFeature))
+    g.add((analysisOutput, AC['publicationOf'], digitalSignal))
+
+    frame = {"@type": str(AC['AnalysisOutput'])}  # Apparently just by indicating the frame like this it already builds the desired output
     jsonld = g.serialize(format='json-ld', context=context).decode() # this gives us direct triple representation in a compact form
-    #jsonld = pyld.jsonld.frame(jsonld, frame, options={"documentLoader":dlfake}) # this "frames" the JSON-LD doc but it also expands it (writes out full URIs)
+    jsonld = pyld.jsonld.frame(jsonld, frame, options={"documentLoader":dlfake}) # this "frames" the JSON-LD doc but it also expands it (writes out full URIs)
     jsonld = pyld.jsonld.compact(jsonld, context, options={"documentLoader":dlfake}) # so we need to compact it again (turn URIs into CURIEs)
     return jsonld
 
 
-def analyze(audiofile, outfile, compute_timbral_models=False, compute_highlevel_music_descriptors=False, out_format="json"):
+def analyze(audiofile, outfile, compute_timbral_models=False, compute_highlevel_music_descriptors=False, out_format="json", uri=None):
     logger.info('{0}: starting analysis'.format(audiofile))
 
     # Get initial descriptors from Freesound Extractor
@@ -198,7 +199,7 @@ def analyze(audiofile, outfile, compute_timbral_models=False, compute_highlevel_
     
     if out_format == 'jsonld':
         # Convert output to JSON-LD
-        output = render_jsonld_output(ac_descriptors)
+        output = render_jsonld_output(ac_descriptors, uri=uri)
     else:
         # By default (or in case of unknown format, use JSON)
         output = ac_descriptors
@@ -217,9 +218,10 @@ if __name__ == '__main__':
     parser.add_argument('-i', '--input', help='input audio file', required=True)
     parser.add_argument('-o', '--output', help='output analysis file', required=True)
     parser.add_argument('-f', '--format', help='format of the output analysis file ("json" or "jsonld", defaults to "jsonld")', default="json")
+    parser.add_argument('-u', '--uri', help='URI for the analyzed sound (only used if "jsonld" format is chosen)', default=None)
     
     args = parser.parse_args()
     logging.basicConfig(format='%(asctime)s %(levelname)s:%(message)s', level=logging.INFO if not args.verbose else logging.DEBUG)
 
-    analyze(args.input, args.output, args.timbral_models, args.music_highlevel, args.format)
+    analyze(args.input, args.output, args.timbral_models, args.music_highlevel, args.format, args.uri)
     
