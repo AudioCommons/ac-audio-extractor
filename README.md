@@ -1,45 +1,71 @@
-# AudioCommons audio extractor for music samples
+# AudioCommons audio extractor
 
-Build an image from the root directory (containing Dockerimage file):
+This tool incorporates algorithms for extracting music properties for music samples and music pieces, and other high-level non-musical properties for other kinds of sounds. 
+
+To facilitate its usage, the tool has been *dockerized* and should run successfully in any platform with [Docker](https://www.docker.com/) installed.
+
+
+## Using the tool
+
+You can easily analyze sound from an audio file in the current directory using the following command:
 
 ```
-docker build -t audiocommons/ac-audio-extractor .
-```
-
-Analyze sound from an audio file in the current directory:
-
-```
-docker run -it --rm -v `pwd`:/tmp audiocommons/ac-audio-extractor -i /tmp/audio.wav -o /tmp/analysis.json
+docker run -it --rm -v `pwd`:/tmp mtgupf/ac-audio-extractor:v2 -i /tmp/audio.wav -o /tmp/analysis.json
 ```
 
 The example above mounts the current directory ``pwd`` in the virtual `tmp` directory inside Docker. The output file `audio.json` is also written in `tmp`, and therefore appears in the current directory. You can also mount different volumes and specify paths for input audio and analysis output like this (for more information, checkout [Docker volumes](https://docs.docker.com/storage/volumes/)):
 
 ```
-docker run -it --rm -v /local/path/to/your/audio/file.wav:/audio.wav -v /local/path/to/output_directory/:/outdir audiocommons/ac-audio-extractor -i /audio.wav -o /outdir/analysis.json
+docker run -it --rm -v /local/path/to/your/audio/file.wav:/audio.wav -v /local/path/to/output_directory/:/outdir mtgupf/ac-audio-extractor:v2 -i /audio.wav -o /outdir/analysis.json
 ```
 
-Run help command to learn about available options:
+Run help command to learn about available options (TODO: update that section):
 
 ```
-docker run -it --rm -v `pwd`:/tmp audiocommons/ac-audio-extractor --help
+docker run -it --rm -v `pwd`:/tmp mtgupf/ac-audio-extractor:v2 --help
 
-usage: analyze.py [-h] -i INPUT -o OUTPUT [-v]
+usage: analyze.py [-h] [-v] [-t] [-m] -i INPUT -o OUTPUT [-f FORMAT]
 
-AudioCommons audio extractor. Analyzes a given audio file and writes results
-to a json file.
+AudioCommons audio extractor (v2). Analyzes a given audio file and writes
+results to a JSON file.
 
 optional arguments:
   -h, --help            show this help message and exit
+  -v, --verbose         if set prints more info on screen
+  -t, --timbral-models  if set, compute timbral models as well
+  -m, --music-highlevel
+                        if set, compute high-level music descriptors
   -i INPUT, --input INPUT
                         input audio file
   -o OUTPUT, --output OUTPUT
-                        output json file
-  -v, --verbose         if set prints more info on screen
+                        output analysis file
+  -f FORMAT, --format FORMAT
+                        format of the output analysis file ("json" or
+                        "jsonld", defaults to "jsonld")
 ```
 
 
 
-## Included descriptors (TODO: update that)
+## Build the docker image locally
+
+There is no need to build the Docker image locally because Docker will automatically retrieve the image from the remote [Docker Hub](https://hub.docker.com). However, if you need a custom version of the image you can also build it locally using the instructions in the `Dockerfile` of this repository. Use the following command:
+
+```
+docker build -t mtgupf/ac-audio-extractor:v2 .
+```
+
+### Pushing the image to MTG's Docker Hub
+
+The pre-built image for the Audio Commons annotations tools is hosted in [MTG](http://mtg.upf.edu/)'s Docker Hub account. To push a new version of the image use the following command (and change the tag if needed):
+
+```
+docker push mtgupf/ac-audio-extractor:v2
+```
+
+This is only meant for the admins/maintainers of the image. You'll need a Docker account with wrtie access to MTG's Docker Hub space.
+
+
+## Included descriptors (TODO: update that section)
 
 ### Audio file properties
 - ```ac:duration```: duration of audio file (sec.)
