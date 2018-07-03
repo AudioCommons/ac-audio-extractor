@@ -7,10 +7,21 @@ import essentia
 essentia.log.infoActive = False
 essentia.log.warningActive = False
 import logging
+import pyld
+import rdflib
+from rdflib import Graph, URIRef, BNode, Literal, Namespace, plugin
+from rdflib.serializer import Serializer
+from rdflib.namespace import RDF
 from argparse import ArgumentParser
 from essentia.standard import MusicExtractor, FreesoundExtractor, YamlOutput, LoopBpmConfidence, PercivalBpmEstimator, EasyLoader, PitchContourSegmentation, PredominantPitchMelodia
 
 logger = logging.getLogger()
+
+# TODO: add correct URLs here
+AC = Namespace("http://audiocommons.org/vocab/")
+AFO = Namespace("http://motools.sourceforge.net/doc/audio_features.html#")
+AFV = Namespace("http://motools.sourceforge.net/doc/?#")
+EBU = Namespace("https://www.ebu.ch/metadata/ontologies/ebucore/index.html#")
 
 ac_mapping = {
     "duration": "metadata.audio_properties.length",
@@ -117,32 +128,7 @@ def ac_highlevel_music_description(audiofile, ac_descriptors):
     ac_descriptors["mood"] = me_pool['highlevel.mood_test.value']
 
 
-def render_jsonld_output(ac_descriptors, uri=None):
-    # NOTE: this is a fake implementation that renders arbitrary JSON-LD data
-
-    import rdflib,pyld
-    from rdflib import Graph, URIRef, BNode, Literal, Namespace, plugin
-    from rdflib.serializer import Serializer
-    from rdflib.namespace import RDF
-    from pprint import pprint
-
-    def dlfake(input):
-        '''This is to avoid a bug in PyLD (should be easy to fix and avoid this hack really..)'''
-        return {'contextUrl': None,'documentUrl': None,'document': input}
-
-    # TODO: check that these URLs are ok
-    AC = Namespace("http://audiocommons.org/vocab/")
-    AFO = Namespace("http://motools.sourceforge.net/doc/audio_features.html#")
-    AFV = Namespace("http://motools.sourceforge.net/doc/?#")
-    EBU = Namespace("https://www.ebu.ch/metadata/ontologies/ebucore/index.html#")
-
-    context = {
-        "rdf": str(RDF),
-        "ac": str(AC),
-        "afo": str(AFO),
-        "afv": str(AFV),
-        "ebucore": str(EBU),
-    }
+def build_graph(ac_descriptors, uri=None):
 
     g = Graph()
     
@@ -163,22 +149,50 @@ def render_jsonld_output(ac_descriptors, uri=None):
     digitalSignal = BNode()
     g.add((digitalSignal, RDF['type'], AC['DigitalSignal']))
     g.add((digitalSignal, AC['samplerate'], Literal(ac_descriptors['samplerate'])))
-    g.add((digitalSignal, AC['channels'], Literal(ac_descriptors['channels'])))
+    g.add((digitalSignal, AC['channels'], Literal(int(ac_descriptors['channels']))))
+    g.add((digitalSignal, AC['audio_md5'], Literal(ac_descriptors['audio_md5'])))
     g.add((digitalSignal, AC['lossless'], Literal(True if ac_descriptors['lossless'] else False)))
-    for key, value in ac_descriptors.items(): # TODO: properly iterate over relevant descriptors only
-        signalFeature = BNode()
-        g.add((signalFeature, RDF['type'], AFV[key]))
-        g.add((signalFeature, AFO['value'], Literal(value)))
-        g.add((signalFeature, AFO['confidence'], Literal(0.0)))
-        g.add((digitalSignal, AC['signal_feature'], signalFeature))
+    for type_name, value_field, confidence_field in [
+        ('Tempo', 'tempo', 'tempo_confidence'),
+        ('Key', 'tonality', 'tonality_confidence'),
+        ('Loudness', 'loudness', None),
+        ('TemporalCentroid', 'temporal_centroid', None),
+        ('LogAttackTime', 'log_attack_time', None),
+        ('MIDINote', 'note_midi', 'note_confidence'),
+        ('Note', 'note_name', 'note_confidence'),
+        ('Pitch', 'note_frequency', 'note_confidence'),
+    ]:
+        if value_field in ac_descriptors:
+            # Only include descriptors if present in analysis
+            signalFeature = BNode()
+            g.add((signalFeature, RDF['type'], AFV[type_name]))
+            g.add((signalFeature, AFO['value'], Literal(ac_descriptors[value_field])))
+            if confidence_field is not None:
+                g.add((signalFeature, AFO['confidence'], Literal(ac_descriptors[confidence_field])))
+            g.add((digitalSignal, AC['signal_feature'], signalFeature))
     g.add((analysisOutput, AC['publicationOf'], digitalSignal))
 
+    return g
+
+
+def render_jsonld_output(g):
+
+    def dlfake(input):
+        '''This is to avoid a bug in PyLD (should be easy to fix and avoid this hack really..)'''
+        return {'contextUrl': None,'documentUrl': None,'document': input}
+
+    context = {
+        "rdf": str(RDF),
+        "ac": str(AC),
+        "afo": str(AFO),
+        "afv": str(AFV),
+        "ebucore": str(EBU),
+    }
     frame = {"@type": str(AC['AnalysisOutput'])}  # Apparently just by indicating the frame like this it already builds the desired output
     jsonld = g.serialize(format='json-ld', context=context).decode() # this gives us direct triple representation in a compact form
     jsonld = pyld.jsonld.frame(jsonld, frame, options={"documentLoader":dlfake}) # this "frames" the JSON-LD doc but it also expands it (writes out full URIs)
     jsonld = pyld.jsonld.compact(jsonld, context, options={"documentLoader":dlfake}) # so we need to compact it again (turn URIs into CURIEs)
     return jsonld
-
 
 def analyze(audiofile, outfile, compute_timbral_models=False, compute_highlevel_music_descriptors=False, out_format="json", uri=None):
     logger.info('{0}: starting analysis'.format(audiofile))
@@ -199,7 +213,8 @@ def analyze(audiofile, outfile, compute_timbral_models=False, compute_highlevel_
     
     if out_format == 'jsonld':
         # Convert output to JSON-LD
-        output = render_jsonld_output(ac_descriptors, uri=uri)
+        graph = build_graph(ac_descriptors, uri=uri)
+        output = render_jsonld_output(graph)
     else:
         # By default (or in case of unknown format, use JSON)
         output = ac_descriptors
