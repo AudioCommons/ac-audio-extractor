@@ -17,11 +17,10 @@ from essentia.standard import MusicExtractor, FreesoundExtractor, YamlOutput, Lo
 
 logger = logging.getLogger()
 
-# TODO: add correct URLs here
-AC = Namespace("http://audiocommons.org/vocab/")
-AFO = Namespace("http://motools.sourceforge.net/doc/audio_features.html#")
-AFV = Namespace("http://motools.sourceforge.net/doc/?#")
-EBU = Namespace("https://www.ebu.ch/metadata/ontologies/ebucore/index.html#")
+AC = Namespace("https://w3id.org/ac-ontology/aco#")
+AFO = Namespace("https://w3id.org/afo/onto/1.1#")
+AFV = Namespace("https://w3id.org/afo/vocab/1.1#")
+EBU = Namespace("http://www.ebu.ch/metadata/ontologies/ebucore/ebucore#")
 
 ac_mapping = {
     "duration": "metadata.audio_properties.length",
@@ -44,6 +43,79 @@ def run_freesound_extractor(audiofile):
     return fs_pool
 
 
+def estimate_number_of_events(audiofile, region_energy_thr=2, silence_thr_scale=4, group_regions_ms=100):
+    """
+    Returns list of activity "onsets" for an audio signal based on its energy envelope. 
+    This is more like "activity detecton" than "onset detection".
+    """    
+
+    def group_regions(regions, group_regions_ms):
+        """
+        Group together regions which are very close in time (i.e. the end of a region is very close to the start of the following).
+        """
+        if len(regions) <= 1:
+            grouped_regions = regions[:]  # Don't do anything if only one region or no regions at all
+        else:
+            # Iterate over regions and mark which regions should be grouped with the following regions
+            to_group = []
+            for count, ((at0, at1, a_energy), (bt0, bt1, b_energy)) in enumerate(zip(regions[:-1], regions[1:])):
+                if bt0 - at1 < group_regions_ms / 1000:
+                    to_group.append(1)
+                else:
+                    to_group.append(0)
+            to_group.append(0)  # Add 0 for the last one which will never be grouped with next (there is no "next region")
+
+            # Now generate the grouped list of regions based on the marked ones in 'to_group'
+            grouped_regions = []
+            i = 0
+            while i < len(to_group):
+                current_group_start = None
+                current_group_end = None
+                x = to_group[i]
+                if x == 1 and current_group_start is None:
+                    # Start current grouping
+                    current_group_start = i
+                    while x == 1:
+                        i += 1
+                        x = to_group[i]
+                        current_group_end = i
+                    grouped_regions.append( (regions[current_group_start][0], regions[current_group_end][1], sum([z for x,y,z in regions[current_group_start:current_group_end+1]])))
+                    current_group_start = None
+                    current_group_end = None
+                else:
+                    grouped_regions.append(regions[i])
+                i += 1
+        return grouped_regions
+
+        
+        t = np.linspace(0, len(audio)/sr, num=len(audio))
+        
+        # Compute envelope and average signal energy
+        env_algo = essentia.standard.Envelope(
+            attackTime = 15,
+            releaseTime = 50,
+        )
+        envelope = env_algo(audio)
+        average_signal_energy = np.sum(np.array(envelope)**2)/len(envelope)
+        silence_thr = average_signal_energy  * silence_thr_scale
+        
+        # Get energy regions above threshold
+        # Implementation based on https://stackoverflow.com/questions/43258896/extract-subarrays-of-numpy-array-whose-values-are-above-a-threshold
+        mask = np.concatenate(([False], envelope > silence_thr, [False] ))
+        idx = np.flatnonzero(mask[1:] != mask[:-1])
+        regions = [(t[idx[i]], t[idx[i+1]], np.sum(envelope[idx[i]:idx[i+1]]**2)) for i in range(0,len(idx),2)]  # Energy is a list of tuples like (start_time, end_time, energy)
+        regions = [region for region in regions if region[2] > region_energy_thr] # Discard those below region_energy_thr
+        
+        # Group detected regions that happen close together
+        regions = group_regions(regions, group_regions_ms)            
+
+        return len(regions)  # Return number of sound events detected
+
+
+def is_single_event(audiofile):
+    return estimate_number_of_events(audiofile) == 1
+
+
 def ac_general_description(audiofile, fs_pool, ac_descriptors):
     logger.debug('{0}: adding basic AudioCommons descriptors'.format(audiofile))
 
@@ -53,25 +125,28 @@ def ac_general_description(audiofile, fs_pool, ac_descriptors):
             value = fs_pool[essenia_name]
             ac_descriptors[ac_name] = value
     ac_descriptors["filesize"] = os.stat(audiofile).st_size
+    ac_descriptors["single_event"] = is_single_event(audiofile)
 
 
-def ac_tempo_description(audiofile, fs_pool, ac_descriptors):
-    logger.debug('{0}: adding tempo descriptors'.format(audiofile))
+def ac_rhythm_description(audiofile, fs_pool, ac_descriptors):
+    logger.debug('{0}: adding rhythm descriptors'.format(audiofile))
+    
+    IS_LOOP_CONFIDENCE_THRESHOLD = 0.95
+    is_loop = fs_pool['rhythm.bpm_loop_confidence.mean'] > IS_LOOP_CONFIDENCE_THRESHOLD
+    ac_descriptors["loop"] = is_loop
 
-    tempo = int(round(fs_pool['rhythm.bpm']))
-    tempo_confidence = fs_pool['rhythm.bpm_confidence'] / 5.0  # Normalize BPM confidence value
-    if tempo_confidence < 0.0:
-        tempo_confidence = 0.0
-    elif tempo_confidence > 1.0:
-        tempo_confidence = 1.0
-    ac_descriptors["tempo"] = tempo
-    ac_descriptors["tempo_confidence"] = tempo_confidence
-    ac_descriptors["tempo_loop"] = int(round(fs_pool['rhythm.bpm_loop']))
-    ac_descriptors["tempo_loop_confidence"] = fs_pool['rhythm.bpm_loop_confidence.mean']
+    if is_loop:
+        ac_descriptors["tempo"] = int(round(fs_pool['rhythm.bpm_loop']))
+        ac_descriptors["tempo_confidence"] = fs_pool['rhythm.bpm_loop_confidence.mean']
+    else:
+        ac_descriptors["tempo"] = int(round(fs_pool['rhythm.bpm']))
+        tempo_confidence = fs_pool['rhythm.bpm_confidence'] / 5.0  # Normalize BPM confidence value to be in range [0, 1]
+        ac_descriptors["tempo_confidence"] = numpy.clip(tempo_confidence, 0.0, 1.0)
+
     return ac_descriptors
 
 
-def ac_key_description(audiofile, fs_pool, ac_descriptors):
+def ac_tonality_description(audiofile, fs_pool, ac_descriptors):
     logger.debug('{0}: adding tonality descriptors'.format(audiofile))
 
     key = fs_pool['tonal.key_edma.key'] + " " + fs_pool['tonal.key_edma.scale']
@@ -98,6 +173,11 @@ def ac_pitch_description(audiofile, fs_pool, ac_descriptors):
     ac_descriptors["note_name"] = note_name
     ac_descriptors["note_frequency"] = pitch_median
     ac_descriptors["note_confidence"] = float(fs_pool['lowlevel.pitch_instantaneous_confidence.median'])
+
+    # As a post-processing step, check if 'single_event' descriptor has been computed. If that is the
+    # case and the estimate is that the sound has more than one event, set note confidence to 0.
+    if 'single_event' in ac_descriptors and not ac_descriptors['single_event']:
+        ac_descriptors["note_confidence"] = 0.0
 
 
 def ac_timbral_models(audiofile, ac_descriptors):
@@ -138,6 +218,7 @@ def build_graph(ac_descriptors, uri=None):
         analysisOutput = URIRef(uri)
     g.add((analysisOutput, RDF['type'], AC['AnalysisOutput']))
     g.add((analysisOutput, AC['duration'], Literal(ac_descriptors['duration'])))
+    g.add((analysisOutput, AC['single_event'], Literal(ac_descriptors['single_event'])))
 
     audioFile = BNode()
     g.add((audioFile, RDF['type'], AC['AudioFile']))
@@ -154,6 +235,7 @@ def build_graph(ac_descriptors, uri=None):
     g.add((digitalSignal, AC['lossless'], Literal(True if ac_descriptors['lossless'] else False)))
     for type_name, value_field, confidence_field in [
         ('Tempo', 'tempo', 'tempo_confidence'),
+        ('Loop', 'loop', None),
         ('Key', 'tonality', 'tonality_confidence'),
         ('Loudness', 'loudness', None),
         ('TemporalCentroid', 'temporal_centroid', None),
@@ -161,6 +243,12 @@ def build_graph(ac_descriptors, uri=None):
         ('MIDINote', 'note_midi', 'note_confidence'),
         ('Note', 'note_name', 'note_confidence'),
         ('Pitch', 'note_frequency', 'note_confidence'),
+        ('TimbreBrightness', 'brightness', 'note_confidence'),
+        ('TimbreDepth', 'depth', None),
+        ('TimbreHardness', 'hardness', None),
+        ('TimbreMetallic', 'metallic', None),
+        ('TimbreReverb', 'reverb', None),
+        ('TimbreRoughness', 'roughness', None),
     ]:
         if value_field in ac_descriptors:
             # Only include descriptors if present in analysis
@@ -194,7 +282,7 @@ def render_jsonld_output(g):
     jsonld = pyld.jsonld.compact(jsonld, context, options={"documentLoader":dlfake}) # so we need to compact it again (turn URIs into CURIEs)
     return jsonld
 
-def analyze(audiofile, outfile, compute_timbral_models=False, compute_highlevel_music_descriptors=False, out_format="json", uri=None):
+def analyze(audiofile, outfile, compute_timbral_models=False, compute_descriptors_music_pieces=False, compute_descriptors_music_samples=False, out_format="json", uri=None):
     logger.info('{0}: starting analysis'.format(audiofile))
 
     # Get initial descriptors from Freesound Extractor
@@ -203,12 +291,14 @@ def analyze(audiofile, outfile, compute_timbral_models=False, compute_highlevel_
     # Post-process descriptors to get AudioCommons descirptors and compute extra ones
     ac_descriptors = dict()
     ac_general_description(audiofile, fs_pool, ac_descriptors)
-    ac_key_description(audiofile, fs_pool, ac_descriptors)
-    ac_tempo_description(audiofile, fs_pool, ac_descriptors)
-    ac_pitch_description(audiofile, fs_pool, ac_descriptors)
+    if compute_descriptors_music_pieces or compute_descriptors_music_samples:
+        ac_tonality_description(audiofile, fs_pool, ac_descriptors)
+        ac_rhythm_description(audiofile, fs_pool, ac_descriptors)
+    if compute_descriptors_music_samples:
+        ac_pitch_description(audiofile, fs_pool, ac_descriptors)
     if compute_timbral_models:
         ac_timbral_models(audiofile, ac_descriptors)
-    if compute_highlevel_music_descriptors:
+    if compute_descriptors_music_pieces:
         ac_highlevel_music_description(audiofile, ac_descriptors)
     
     if out_format == 'jsonld':
@@ -227,16 +317,17 @@ if __name__ == '__main__':
     parser = ArgumentParser(description="""
     AudioCommons audio extractor (v2). Analyzes a given audio file and writes results to a JSON file.
     """)
-    parser.add_argument('-v', '--verbose', help='if set prints more info on screen', action='store_const', const=True, default=False)
-    parser.add_argument('-t', '--timbral-models', help='if set, compute timbral models as well', action='store_const', const=True, default=False)
-    parser.add_argument('-m', '--music-highlevel', help='if set, compute high-level music descriptors', action='store_const', const=True, default=False)
+    parser.add_argument('-v', '--verbose', help='if set, prints detailed info on screen during the analysis', action='store_const', const=True, default=False)
+    parser.add_argument('-t', '--timbral-models', help='include descriptors computed from timbral models', action='store_const', const=True, default=False)
+    parser.add_argument('-m', '--music-pieces', help='include descriptors designed for music pieces', action='store_const', const=True, default=False)
+    parser.add_argument('-s', '--music-samples', help='include descriptors designed for music samples', action='store_const', const=True, default=False)
     parser.add_argument('-i', '--input', help='input audio file', required=True)
     parser.add_argument('-o', '--output', help='output analysis file', required=True)
-    parser.add_argument('-f', '--format', help='format of the output analysis file ("json" or "jsonld", defaults to "jsonld")', default="json")
+    parser.add_argument('-f', '--format', help='format of the output analysis file ("json" or "jsonld", defaults to "jsonld")', default="jsonld")
     parser.add_argument('-u', '--uri', help='URI for the analyzed sound (only used if "jsonld" format is chosen)', default=None)
     
     args = parser.parse_args()
     logging.basicConfig(format='%(asctime)s %(levelname)s:%(message)s', level=logging.INFO if not args.verbose else logging.DEBUG)
 
-    analyze(args.input, args.output, args.timbral_models, args.music_highlevel, args.format, args.uri)
+    analyze(args.input, args.output, args.timbral_models, args.music_pieces, args.music_samples, args.format, args.uri)
     
