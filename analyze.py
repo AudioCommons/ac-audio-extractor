@@ -141,7 +141,7 @@ def ac_rhythm_description(audiofile, fs_pool, ac_descriptors):
     else:
         ac_descriptors["tempo"] = int(round(fs_pool['rhythm.bpm']))
         tempo_confidence = fs_pool['rhythm.bpm_confidence'] / 5.0  # Normalize BPM confidence value to be in range [0, 1]
-        ac_descriptors["tempo_confidence"] = numpy.clip(tempo_confidence, 0.0, 1.0)
+        ac_descriptors["tempo_confidence"] = np.clip(tempo_confidence, 0.0, 1.0)
 
     return ac_descriptors
 
