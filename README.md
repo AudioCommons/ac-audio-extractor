@@ -7,19 +7,19 @@ To facilitate its usage, the tool has been *dockerized* and should run successfu
 
 ## Running the audio extractor
 
-You can easily analyze sound from an audio file in the current directory using the following command:
+The Audio Commons Audio Extractor is expected to be used as a command line tool and run from a terminal. Assuming you have Docker installed, you can easily analyze an audio file using the following command (the audio file must be located in the same folder from where you run the command, be aware that the first time you run this command it will take a lot of time as Docker will need to download the actual Audio Commons Audio Extractor tool first):
 
 ```
 docker run -it --rm -v `pwd`:/tmp mtgupf/ac-audio-extractor:v2 -i /tmp/audio.wav -o /tmp/analysis.json -smt
 ```
 
-The example above mounts the current directory ``pwd`` in the virtual `tmp` directory inside Docker. The output file `audio.json` is also written in `tmp`, and therefore appears in the current directory. You can also mount different volumes and specify paths for input audio and analysis output like this (for more information, checkout [Docker volumes](https://docs.docker.com/storage/volumes/)):
+The example above mounts the current directory ``pwd`` in the virtual `tmp` directory inside Docker. The output file `audio.json` is also written in `tmp`, and therefore appears in the current directory. You can also mount different volumes and specify paths for input audio and analysis output using the following command (read the [Docker volumes](https://docs.docker.com/storage/volumes/) documentation for more information):
 
 ```
 docker run -it --rm -v /local/path/to/your/audio/file.wav:/audio.wav -v /local/path/to/output_directory/:/outdir mtgupf/ac-audio-extractor:v2 -i /audio.wav -o /outdir/analysis.json  -smt
 ```
 
-Run help command to learn about available options:
+You can use the `--help` flag with the Audio Commons Audio Extractor so see a complete list of all available options:
 
 ```
 docker run -it --rm -v `pwd`:/tmp mtgupf/ac-audio-extractor:v2 --help
@@ -47,6 +47,8 @@ optional arguments:
   -u URI, --uri URI     URI for the analyzed sound (only used if "jsonld"
                         format is chosen)
 ```
+
+Note that you can use the flags `t`, `m` and `s` to enable or disable the computation of some specific audio features.
 
 
 ## Output formats
@@ -209,25 +211,65 @@ docker push mtgupf/ac-audio-extractor:v2
 This is only meant for the admins/maintainers of the image. You'll need a Docker account with wrtie access to MTG's Docker Hub space.
 
 
-## Included descriptors (TODO: update that section)
+## Included audio features
 
 ### Audio file properties
-- ```duration```: duration of audio file (sec.)
-- ```lossless```: whether audio file is in lossless codec (True or False)
-- ```codec```: audio codec
-- ```bitrate```: bit rate
-- ```samplerate```: sample rate
-- ```channels```: number of audio channels
-- ```audio_md5```: the MD5 checksum of raw undecoded audio payload. It can be used as a unique identifier of audio content
 
-### Music pieces
-- ```ac:tempo```: BPM value estimated by beat tracking algorithm by [Degara et al., 2012](http://essentia.upf.edu/documentation/reference/std_RhythmExtractor2013.html).
-- ```ac:tonality```: [key and scale](http://essentia.upf.edu/documentation/reference/std_Key.html) estimate based on HPCP descriptor and "Krumhansl" key detection profile which should work generally fine for pop music. 
-- ```ac:note```: Pitch note name based on median of estimated fundamental frequency.
-- ```ac:mini_note```: Estimated midi note number pitch note.
+These audio features are always computed and include:
+
+- ```duration```: Duration of audio file in seconds.
+- ```lossless```: Whether audio file is in lossless codec (true or false).
+- ```codec```: Audio codec.
+- ```bitrate```: Bit rate.
+- ```samplerate```: Sample rate in Hz.
+- ```channels```: Number of audio channels.
+- ```audio_md5```: The MD5 checksum of raw undecoded audio payload. It can be used as a unique identifier of audio content.
+- ```filesize```: Size of the file in nytes.
 
 ### Dynamics
-- ```ac:loudness```: the integrated (overall) loudness (LUFS) measured using the [EBU R128 standard](http://essentia.upf.edu/documentation/reference/std_LoudnessEBUR128.html).
-- ```ac:dynamic_range```: loudness range (dB, LU) measured using the [EBU R128 standard](http://essentia.upf.edu/documentation/reference/std_LoudnessEBUR128.html).
-- ```ac_temporal_centroid```: temporal centroid (sec.) of the audio signal. It is the point in time in a signal that is a temporal balancing point of the sound event energy.
-- ```ac:log_attack_time```: the [log (base 10) of the attack time](http://essentia.upf.edu/documentation/reference/std_LogAttackTime.html) of a signal envelope. The attack time is defined as the time duration from when the sound becomes perceptually audible to when it reaches its maximum intensity.
+
+These audio features are always computed and include:
+
+- ```loudness```: The integrated (overall) loudness (LUFS) measured using the [EBU R128 standard](http://essentia.upf.edu/documentation/reference/std_LoudnessEBUR128.html).
+- ```dynamic_range```: Loudness range (dB, LU) measured using the [EBU R128 standard](http://essentia.upf.edu/documentation/reference/std_LoudnessEBUR128.html).
+- ```temporal_centroid```: Temporal centroid (sec.) of the audio signal. It is the point in time in a signal that is a temporal balancing point of the sound event energy.
+- ```log_attack_time```: The [log (base 10) of the attack time](http://essentia.upf.edu/documentation/reference/std_LogAttackTime.html) of a signal envelope. The attack time is defined as the time duration from when the sound becomes perceptually audible to when it reaches its maximum intensity.
+- ```single_event```: Whether the audio file contains one single *audio event* or more than one (true or false). This computation is based on the loudness of the signal and does not do any frequency analysis.
+
+### Music samples and music pieces
+
+These audio features are only computed when using the `-m` or `-s` flags and include:
+
+- ```tempo```: BPM value estimated by beat tracking algorithm.
+- ```tempo_confidence```: Reliability of the tempo estimation above (in a range between 0 and 1).
+- ```loop```: Whether audio file is *loopable* (true or false).
+- ```tonality```: Key value estimated by key detection algorithm. 
+- ```tonality_confidence```: Reliability of the key estimation above (in a range between 0 and 1).
+
+
+### Music samples 
+
+These audio features are only computed when using the `-s` flag and include:
+
+- ```note_name```: Pitch note name based on median of estimated fundamental frequency.
+- ```note_midi```: MIDI value corresponding to the estimated note.
+- ```note_frequency```: Frequency corresponding to the estimated note.
+- ```note_confidence```: Reliability of the note name/midi/frequency estimation above (in a range between 0 and 1).
+
+
+### Music pieces 
+
+These audio features are only computed when using the `-m` flag and include:
+
+- ```genre```: Music genre of the analysed music track (not yet implemented).
+- ```mood```: Mood estimation for the analysed music track (not yet implemented).
+
+
+### Timbre models
+
+These audio features are only computed when using the `-t` flag and include:
+
+- ```brightness```: TODO.
+- ```hardness```: TODO.
+- ```depth```: TODO.
+- ```roughness```: TODO.
