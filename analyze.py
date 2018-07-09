@@ -189,8 +189,6 @@ def ac_timbral_models(audiofile, ac_descriptors):
         ('brightness', timbral_brightness), 
         ('depth', timbral_depth), 
         ('hardness', timbral_hardness), 
-        ('metallic', timbral_metallic), 
-        ('reverb', timbral_reverb), 
         ('roughness', timbral_roughness)
     ]:
         try:
