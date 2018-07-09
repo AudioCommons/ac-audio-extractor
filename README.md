@@ -1,4 +1,4 @@
-# AudioCommons audio extractor
+# Audio Commons Audio Extractor
 
 This tool incorporates algorithms for extracting music properties for music samples and music pieces, and other high-level non-musical properties for other kinds of sounds. 
 
@@ -27,7 +27,7 @@ docker run -it --rm -v `pwd`:/tmp mtgupf/ac-audio-extractor:v2 --help
 uusage: analyze.py [-h] [-v] [-t] [-m] [-s] -i INPUT -o OUTPUT [-f FORMAT]
                   [-u URI]
 
-AudioCommons audio extractor (v2). Analyzes a given audio file and writes
+Audio Commons Audio Extractor (v2). Analyzes a given audio file and writes
 results to a JSON file.
 
 optional arguments:

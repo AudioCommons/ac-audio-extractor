@@ -313,7 +313,7 @@ def analyze(audiofile, outfile, compute_timbral_models=False, compute_descriptor
     
 if __name__ == '__main__':
     parser = ArgumentParser(description="""
-    AudioCommons audio extractor (v2). Analyzes a given audio file and writes results to a JSON file.
+    Audio Commons Audio Extractor (v2). Analyzes a given audio file and writes results to a JSON file.
     """)
     parser.add_argument('-v', '--verbose', help='if set, prints detailed info on screen during the analysis', action='store_const', const=True, default=False)
     parser.add_argument('-t', '--timbral-models', help='include descriptors computed from timbral models', action='store_const', const=True, default=False)
