@@ -21,6 +21,7 @@ AC = Namespace("https://w3id.org/ac-ontology/aco#")
 AFO = Namespace("https://w3id.org/afo/onto/1.1#")
 AFV = Namespace("https://w3id.org/afo/vocab/1.1#")
 EBU = Namespace("http://www.ebu.ch/metadata/ontologies/ebucore/ebucore#")
+NFO = Namespace("http://www.semanticdesktop.org/ontologies/2007/03/22/nfo#")
 
 ac_mapping = {
     "duration": "metadata.audio_properties.length",
@@ -209,28 +210,36 @@ def ac_highlevel_music_description(audiofile, ac_descriptors):
 def build_graph(ac_descriptors, uri=None):
 
     g = Graph()
-    
-    if uri is None:
-        analysisOutput = BNode()
-    else:
-        analysisOutput = URIRef(uri)
-    g.add((analysisOutput, RDF['type'], AC['AnalysisOutput']))
-    g.add((analysisOutput, AC['duration'], Literal(ac_descriptors['duration'])))
-    g.add((analysisOutput, AC['single_event'], Literal(ac_descriptors['single_event'])))
 
     audioFile = BNode()
-    g.add((audioFile, RDF['type'], AC['AudioFile']))
-    g.add((audioFile, EBU['bitrate'], Literal(ac_descriptors['bitrate'])))
-    g.add((audioFile, EBU['filesize'], Literal(ac_descriptors['filesize'])))
-    g.add((audioFile, EBU['hasCodec'], Literal(ac_descriptors['codec'])))
-    g.add((analysisOutput, AC['availableAs'], audioFile))
 
-    digitalSignal = BNode()
-    g.add((digitalSignal, RDF['type'], AC['DigitalSignal']))
-    g.add((digitalSignal, AC['samplerate'], Literal(ac_descriptors['samplerate'])))
-    g.add((digitalSignal, AC['channels'], Literal(int(ac_descriptors['channels']))))
-    g.add((digitalSignal, AC['audio_md5'], Literal(ac_descriptors['audio_md5'])))
-    g.add((digitalSignal, AC['lossless'], Literal(True if ac_descriptors['lossless'] else False)))
+    if uri is None:
+        availableItemOf = BNode()
+    else:
+        availableItemOf = URIRef(uri)
+    g.add((availableItemOf, RDF['type'], AC['AudioClip']))
+    g.add((audioFile, AC['availableItemOf'], availableItemOf))
+
+    g.add((audioFile, RDF['type'], AC['AudioFile'])) 
+    g.add((audioFile, AC['singalSamplerate'], Literal(ac_descriptors['samplerate'])))
+    g.add((audioFile, AC['signalChannels'], Literal(int(ac_descriptors['channels']))))
+    g.add((audioFile, AC['signalDuration'], Literal(ac_descriptors['duration'])))
+    g.add((audioFile, EBU['bitrate'], Literal(ac_descriptors['bitrate'])))
+    g.add((audioFile, EBU['filesize'], Literal(ac_descriptors['filesize'])))  
+    g.add((audioFile, AC['audioMd5'], Literal(ac_descriptors['audio_md5'])))
+    #g.add((audioFile, AC['singleEvent'], Literal(ac_descriptors['single_event'])))
+
+    audioCodec = BNode()
+    g.add((audioCodec, RDF['type'], EBU['AudioCodec']))
+    g.add((audioCodec, EBU['codecId'], Literal(ac_descriptors['codec'])))  
+    g.add((audioFile, EBU['hasCodec'], audioCodec))
+
+    if ac_descriptors['lossless']:
+        g.add((audioFile, NFO['compressionType'], Literal('nfo:losslessCompressionType')))
+    else:
+        g.add((audioFile, NFO['compressionType'], Literal('nfo:lossyCompressionType')))
+
+    
     for type_name, value_field, confidence_field in [
         ('Tempo', 'tempo', 'tempo_confidence'),
         ('Loop', 'loop', None),
@@ -241,12 +250,12 @@ def build_graph(ac_descriptors, uri=None):
         ('MIDINote', 'note_midi', 'note_confidence'),
         ('Note', 'note_name', 'note_confidence'),
         ('Pitch', 'note_frequency', 'note_confidence'),
-        ('TimbreBrightness', 'brightness', 'note_confidence'),
-        ('TimbreDepth', 'depth', None),
-        ('TimbreHardness', 'hardness', None),
-        ('TimbreMetallic', 'metallic', None),
-        ('TimbreReverb', 'reverb', None),
-        ('TimbreRoughness', 'roughness', None),
+        #('TimbreBrightness', 'brightness', 'note_confidence'),
+        #('TimbreDepth', 'depth', None),
+        #('TimbreHardness', 'hardness', None),
+        #('TimbreMetallic', 'metallic', None),
+        #('TimbreReverb', 'reverb', None),
+        #('TimbreRoughness', 'roughness', None),
     ]:
         if value_field in ac_descriptors:
             # Only include descriptors if present in analysis
@@ -255,9 +264,8 @@ def build_graph(ac_descriptors, uri=None):
             g.add((signalFeature, AFO['value'], Literal(ac_descriptors[value_field])))
             if confidence_field is not None:
                 g.add((signalFeature, AFO['confidence'], Literal(ac_descriptors[confidence_field])))
-            g.add((digitalSignal, AC['signal_feature'], signalFeature))
-    g.add((analysisOutput, AC['publicationOf'], digitalSignal))
-
+            g.add((audioFile, AC['signalAudioFeature'], signalFeature))
+    
     return g
 
 
@@ -273,8 +281,9 @@ def render_jsonld_output(g):
         "afo": str(AFO),
         "afv": str(AFV),
         "ebucore": str(EBU),
+        "nfo": str(NFO),
     }
-    frame = {"@type": str(AC['AnalysisOutput'])}  # Apparently just by indicating the frame like this it already builds the desired output
+    frame = {"@type": str(AC['AudioFile'])}  # Apparently just by indicating the frame like this it already builds the desired output
     jsonld = g.serialize(format='json-ld', context=context).decode() # this gives us direct triple representation in a compact form
     jsonld = pyld.jsonld.frame(jsonld, frame, options={"documentLoader":dlfake}) # this "frames" the JSON-LD doc but it also expands it (writes out full URIs)
     jsonld = pyld.jsonld.compact(jsonld, context, options={"documentLoader":dlfake}) # so we need to compact it again (turn URIs into CURIEs)

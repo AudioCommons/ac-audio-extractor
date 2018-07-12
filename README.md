@@ -102,92 +102,67 @@ The Audio Commons audio extractor can write the analysis output to a **JSON** fi
         "ac": "https://w3id.org/ac-ontology/aco#",
         "afo": "https://w3id.org/afo/onto/1.1#",
         "afv": "https://w3id.org/afo/vocab/1.1#",
-        "ebucore": "http://www.ebu.ch/metadata/ontologies/ebucore/ebucore#"
+        "ebucore": "http://www.ebu.ch/metadata/ontologies/ebucore/ebucore#",
+        "nfo": "http://www.semanticdesktop.org/ontologies/2007/03/22/nfo#"
     },
-    "@type": "ac:AnalysisOutput",
-    "ac:availableAs": {
-        "@type": "ac:AudioFile",
-        "ebucore:bitrate": 705600.0,
-        "ebucore:filesize": 529278,
-        "ebucore:hasCodec": "pcm_s16le"
+    "@type": "ac:AudioFile",
+    "ebucore:bitrate": 705600.0,
+    "ebucore:filesize": 529278,
+    "ebucore:hasCodec": {
+        "@type": "ebucore:AudioCodec",
+        "ebucore:codecId": "pcm_s16le"
     },
-    "ac:duration": 6.0,
-    "ac:publicationOf": {
-        "@type": "ac:DigitalSignal",
-        "ac:audio_md5": "8da67c9c2acbd13998c9002aa0f60466",
-        "ac:channels": 1,
-        "ac:lossless": true,
-        "ac:samplerate": 44100.0,
-        "ac:signal_feature": [
-            {
-                "@type": "afv:Key",
-                "afo:confidence": 0.2868785858154297,
-                "afo:value": "G# minor"
-            },
-            {
-                "@type": "afv:TimbreBrightness",
-                "afo:confidence": 0.0,
-                "afo:value": 50.56954356039029
-            },
-            {
-                "@type": "afv:TimbreRoughness",
-                "afo:value": 0.7237051954207928
-            },
-            {
-                "@type": "afv:TimbreHardness",
-                "afo:value": 0
-            },
-            {
-                "@type": "afv:LogAttackTime",
-                "afo:value": 0.30115795135498047
-            },
-            {
-                "@type": "afv:MIDINote",
-                "afo:confidence": 0.0,
-                "afo:value": 74
-            },
-            {
-                "@type": "afv:Loudness",
-                "afo:value": -28.207069396972656
-            },
-            {
-                "@type": "afv:TimbreMetallic",
-                "afo:value": 0.4906048209174263
-            },
-            {
-                "@type": "afv:TimbreReverb",
-                "afo:value": 0
-            },
-            {
-                "@type": "afv:IsLoop",
-                "afo:value": true
-            },
-            {
-                "@type": "afv:Note",
-                "afo:confidence": 0.0,
-                "afo:value": "D5"
-            },
-            {
-                "@type": "afv:Pitch",
-                "afo:confidence": 0.0,
-                "afo:value": 592.681884765625
-            },
-            {
-                "@type": "afv:TemporalCentroid",
-                "afo:value": 0.5078766345977783
-            },
-            {
-                "@type": "afv:Tempo",
-                "afo:confidence": 1.0,
-                "afo:value": 120
-            },
-            {
-                "@type": "afv:TimbreDepth",
-                "afo:value": 13.000903137777897
-            }
-        ]
+    "nfo:compressionType": "nfo:losslessCompressionType",
+    "ac:audioMd5": "8da67c9c2acbd13998c9002aa0f60466",
+    "ac:availableItemOf": {
+        "@type": "ac:AudioClip"
     },
-    "ac:single_event": false
+    "ac:signalAudioFeature": [
+        {
+            "@type": "afv:Loop",
+            "afo:value": true
+        },
+        {
+            "@type": "afv:Tempo",
+            "afo:confidence": 1.0,
+            "afo:value": 120
+        },
+        {
+            "@type": "afv:Key",
+            "afo:confidence": 0.2868785858154297,
+            "afo:value": "G# minor"
+        },
+        {
+            "@type": "afv:TemporalCentroid",
+            "afo:value": 0.5078766345977783
+        },
+        {
+            "@type": "afv:MIDINote",
+            "afo:confidence": 0.0,
+            "afo:value": 74
+        },
+        {
+            "@type": "afv:Pitch",
+            "afo:confidence": 0.0,
+            "afo:value": 592.681884765625
+        },
+        {
+            "@type": "afv:Loudness",
+            "afo:value": -28.207069396972656
+        },
+        {
+            "@type": "afv:Note",
+            "afo:confidence": 0.0,
+            "afo:value": "D5"
+        },
+        {
+            "@type": "afv:LogAttackTime",
+            "afo:value": 0.30115795135498047
+        }
+    ],
+    "ac:signalChannels": 1,
+    "ac:signalDuration": 6.0,
+    "ac:singalSamplerate": 44100.0
 }
 ```
 
@@ -267,9 +242,11 @@ These audio features are only computed when using the `-m` flag and include:
 
 ### Timbre models
 
-These audio features are only computed when using the `-t` flag and include:
+As described in [deliverable D5.2](https://www.audiocommons.org/assets/files/AC-WP5-SURREY-D5.2%20First%20prototype%20of%20timbral%20characterisation%20tools%20for%20semantically%20annotating%20non-musical%20content.pdf), a number of timbre models have been developed and are included in this tool. Timbre models estimate perceptual qualities of the sounds which tend to be quite subjective and ill-defined. These audio features are only computed when using the `-t` flag and include:
 
-- ```brightness```: TODO.
-- ```hardness```: TODO.
-- ```depth```: TODO.
-- ```roughness```: TODO.
+- ```brightness```: brightness of the analyzed audio in a scale from [0-100]. A *bright* sound is one that is clear/vibrant and/or contains significant high-pitched elements.
+- ```hardness```: hardness of the analyzed audio in a scale from [0-100]. A *hard* sound is one that conveys the sense of having been made (i) by something solid, firm or rigid; or (ii) with a great deal of force.
+- ```depth```: depth of the analyzed audio in a scale from [0-100]. A *deep* sound is one that conveys the sense of having been made far down below the surface of its source.
+- ```roughness```: roughness of the analyzed audio in an undetermined scale. A *rough* sound is one that has an uneven or irregular sonic texture.
+
+NOTE: in some occasions the features above can return values outside the specified ranges.
