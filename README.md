@@ -74,7 +74,7 @@ The Audio Commons audio extractor can write the analysis output to a **JSON** fi
     "single_event": false,
     "tonality": "G# minor",
     "tonality_confidence": 0.2868785858154297,
-    "is_loop": true,
+    "loop": true,
     "tempo": 120,
     "tempo_confidence": 1.0,
     "note_midi": 74,
