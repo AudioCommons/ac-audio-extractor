@@ -1,8 +1,8 @@
 # Audio Commons Audio Extractor
 
-This tool incorporates algorithms for extracting music properties for music samples and music pieces, and other high-level non-musical properties for other kinds of sounds. 
+The Audio Commons Audio Extractor is a tool for analyzing audio files and extract both music properties (for music samples and music pieces) as well as high-level non-musical properties (timbre models). See [this blog post](https://www.audiocommons.org/2018/07/15/audio-commons-audio-extractor.html) for further details about the Audio Commons Audio Extractor.
 
-To facilitate its usage, the tool has been *dockerized* and should run successfully in any platform with [Docker](https://www.docker.com/) installed.
+To facilitate its usage, the tool has been *dockerized* and should run efforlessly in any platform with [Docker](https://www.docker.com/) installed. Below you'll find some instructions for running the tool as well as the full list of included audio features.
 
 
 ## Running the audio extractor
