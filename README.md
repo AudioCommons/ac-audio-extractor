@@ -83,9 +83,7 @@ The Audio Commons audio extractor can write the analysis output to a **JSON** fi
     "note_confidence": 0.0,
     "brightness": 50.56954356039029,
     "depth": 13.000903137777897,
-    "hardness": 0,
     "metallic": 0.4906048209174263,
-    "reverb": 0,
     "roughness": 0.7237051954207928,
     "genre": "Genre B",
     "mood": "Mood B"
