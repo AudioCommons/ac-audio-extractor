@@ -82,7 +82,7 @@ RUN apt-get update \
 # Extra python dependencies
 RUN pip install SoundFile==0.10.2 librosa==0.6.1 scipy==1.1.0
 RUN pip install rdflib==4.2.2 rdflib-jsonld==0.4.0 PyLD==1.0.3
-RUN git clone https://github.com/AudioCommons/timbral_models.git && cd timbral_models && git checkout 17aa485d9ebfc8b658b6bad6c688fab0ebc0a8c8 && python setup.py install  # Using commit with division fixes for Python3 (this is temporal, should be set to master once new version is out)
+RUN git clone https://github.com/AudioCommons/timbral_models.git && cd timbral_models && git checkout e12791458a4c896c40b00096004fd7b260b7f5fb && python setup.py install  # Using commit with division fixes for Python3 (this is temporal, should be set to master once new version is out)
 
 
 # Add high-level models and music extractor configuration
@@ -90,6 +90,8 @@ RUN mkdir -p models
 ADD models /models
 ADD music_extractor_profile.yaml /
 
+
+RUN pip install matplotlib
 
 # Add analysis script
 ADD analyze.py /

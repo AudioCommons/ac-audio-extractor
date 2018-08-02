@@ -184,13 +184,15 @@ def ac_pitch_description(audiofile, fs_pool, ac_descriptors):
 def ac_timbral_models(audiofile, ac_descriptors):
     logger.debug('{0}: computing timbral models'.format(audiofile))
 
-    # TODO: update to latest version of timbral descriptors: https://github.com/AudioCommons/timbral_models/issues/5#issuecomment-376178206
-    from timbral_models import timbral_brightness, timbral_depth, timbral_hardness, timbral_metallic, timbral_reverb, timbral_roughness
+    from timbral_models import timbral_brightness, timbral_depth, timbral_hardness,  timbral_roughness, timbral_booming, timbral_warmth, timbral_sharpness
     for name, function in [
         ('brightness', timbral_brightness), 
         ('depth', timbral_depth), 
         ('hardness', timbral_hardness), 
-        ('roughness', timbral_roughness)
+        ('roughness', timbral_roughness),
+        ('booming', timbral_booming), 
+        ('warmth', timbral_warmth), 
+        ('sharpness', timbral_sharpness)
     ]:
         try:
             value = function(audiofile)
