@@ -150,9 +150,9 @@ def ac_rhythm_description(audiofile, fs_pool, ac_descriptors):
 def ac_tonality_description(audiofile, fs_pool, ac_descriptors):
     logger.debug('{0}: adding tonality descriptors'.format(audiofile))
 
-    key = fs_pool['tonal.key_edma.key'] + " " + fs_pool['tonal.key_edma.scale']
+    key = fs_pool['tonal.key.key'] + " " + fs_pool['tonal.key.scale']
     ac_descriptors["tonality"] = key
-    ac_descriptors["tonality_confidence"] = fs_pool['tonal.key_edma.strength']
+    ac_descriptors["tonality_confidence"] = fs_pool['tonal.key.strength']
     
 
 def ac_pitch_description(audiofile, fs_pool, ac_descriptors):
