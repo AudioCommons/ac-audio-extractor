@@ -8,6 +8,7 @@ import logging
 import pyld
 import rdflib
 import essentia
+import uuid
 essentia.log.infoActive = False
 essentia.log.warningActive = False
 from essentia.standard import MusicExtractor, FreesoundExtractor, MonoLoader, MonoWriter
@@ -196,7 +197,7 @@ def ac_timbral_models(audiofile, ac_descriptors):
         logger.debug('{0}: converting to WAV'.format(audiofile))
 
         # Convert to WAV using Essentia so that timbral models always read WAV file
-        output_filename = '{0}-converted.wav'.format(audiofile)
+        output_filename = '/tmp/{0}-converted.wav'.format(str(uuid.uuid4()))
         audio = MonoLoader(filename=audiofile, sampleRate=samplerate)()
         MonoWriter(filename=output_filename, format='wav', sampleRate=samplerate)(audio)
         return output_filename
@@ -310,6 +311,7 @@ def render_jsonld_output(g):
     jsonld = pyld.jsonld.frame(jsonld, frame, options={"documentLoader":dlfake}) # this "frames" the JSON-LD doc but it also expands it (writes out full URIs)
     jsonld = pyld.jsonld.compact(jsonld, context, options={"documentLoader":dlfake}) # so we need to compact it again (turn URIs into CURIEs)
     return jsonld
+
 
 def analyze(audiofile, outfile, compute_timbral_models=False, compute_descriptors_music_pieces=False, compute_descriptors_music_samples=False, out_format="json", uri=None):
     logger.info('{0}: starting analysis'.format(audiofile))
