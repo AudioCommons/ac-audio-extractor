@@ -2,18 +2,20 @@ import sys
 import os
 import json
 import math
+import subprocess
 import numpy as np
-import essentia
-essentia.log.infoActive = False
-essentia.log.warningActive = False
 import logging
 import pyld
 import rdflib
+import essentia
+essentia.log.infoActive = False
+essentia.log.warningActive = False
+from essentia.standard import MusicExtractor, FreesoundExtractor, MonoLoader, MonoWriter
 from rdflib import Graph, URIRef, BNode, Literal, Namespace, plugin
 from rdflib.serializer import Serializer
 from rdflib.namespace import RDF
 from argparse import ArgumentParser
-from essentia.standard import MusicExtractor, FreesoundExtractor, YamlOutput, LoopBpmConfidence, PercivalBpmEstimator, EasyLoader, PitchContourSegmentation, PredominantPitchMelodia
+from timbral_models import timbral_brightness, timbral_depth, timbral_hardness,  timbral_roughness, timbral_booming, timbral_warmth, timbral_sharpness
 
 logger = logging.getLogger()
 
@@ -36,6 +38,7 @@ ac_mapping = {
     "temporal_centroid": "sfx.temporal_centroid",
     "log_attack_time": "sfx.logattacktime",
 }
+
 
 def run_freesound_extractor(audiofile):
     logger.debug('{0}: running Essentia\'s FreesoundExtractor'.format(audiofile))
@@ -88,29 +91,32 @@ def estimate_number_of_events(audiofile, region_energy_thr=2, silence_thr_scale=
                 i += 1
         return grouped_regions
 
-        
-        t = np.linspace(0, len(audio)/sr, num=len(audio))
-        
-        # Compute envelope and average signal energy
-        env_algo = essentia.standard.Envelope(
-            attackTime = 15,
-            releaseTime = 50,
-        )
-        envelope = env_algo(audio)
-        average_signal_energy = np.sum(np.array(envelope)**2)/len(envelope)
-        silence_thr = average_signal_energy  * silence_thr_scale
-        
-        # Get energy regions above threshold
-        # Implementation based on https://stackoverflow.com/questions/43258896/extract-subarrays-of-numpy-array-whose-values-are-above-a-threshold
-        mask = np.concatenate(([False], envelope > silence_thr, [False] ))
-        idx = np.flatnonzero(mask[1:] != mask[:-1])
-        regions = [(t[idx[i]], t[idx[i+1]], np.sum(envelope[idx[i]:idx[i+1]]**2)) for i in range(0,len(idx),2)]  # Energy is a list of tuples like (start_time, end_time, energy)
-        regions = [region for region in regions if region[2] > region_energy_thr] # Discard those below region_energy_thr
-        
-        # Group detected regions that happen close together
-        regions = group_regions(regions, group_regions_ms)            
+    # Load audio file
+    sample_rate = 44100
+    audio_file = MonoLoader(filename=audiofile, sampleRate=sample_rate)
+    audio = audio_file.compute()
+    t = np.linspace(0, len(audio)/sample_rate, num=len(audio))
+    
+    # Compute envelope and average signal energy
+    env_algo = essentia.standard.Envelope(
+        attackTime = 15,
+        releaseTime = 50,
+    )
+    envelope = env_algo(audio)
+    average_signal_energy = np.sum(np.array(envelope)**2)/len(envelope)
+    silence_thr = average_signal_energy  * silence_thr_scale
+    
+    # Get energy regions above threshold
+    # Implementation based on https://stackoverflow.com/questions/43258896/extract-subarrays-of-numpy-array-whose-values-are-above-a-threshold
+    mask = np.concatenate(([False], envelope > silence_thr, [False] ))
+    idx = np.flatnonzero(mask[1:] != mask[:-1])
+    regions = [(t[idx[i]], t[idx[i+1]], np.sum(envelope[idx[i]:idx[i+1]]**2)) for i in range(0,len(idx),2)]  # Energy is a list of tuples like (start_time, end_time, energy)
+    regions = [region for region in regions if region[2] > region_energy_thr] # Discard those below region_energy_thr
+    
+    # Group detected regions that happen close together
+    regions = group_regions(regions, group_regions_ms)            
 
-        return len(regions)  # Return number of sound events detected
+    return len(regions)  # Return number of sound events detected
 
 
 def is_single_event(audiofile):
@@ -184,7 +190,16 @@ def ac_pitch_description(audiofile, fs_pool, ac_descriptors):
 def ac_timbral_models(audiofile, ac_descriptors):
     logger.debug('{0}: computing timbral models'.format(audiofile))
 
-    from timbral_models import timbral_brightness, timbral_depth, timbral_hardness,  timbral_roughness, timbral_booming, timbral_warmth, timbral_sharpness
+    def convert_to_wav(audiofile, samplerate=44100):
+        logger.debug('{0}: converting to WAV'.format(audiofile))
+
+        # Convert to WAV using Essentia so that timbral models always read WAV file
+        output_filename = '{0}-converted.wav'.format(audiofile)
+        audio = MonoLoader(filename=audiofile, sampleRate=samplerate)()
+        MonoWriter(filename=output_filename, format='wav', sampleRate=samplerate)(audio)
+        return output_filename
+
+    converted_filename = convert_to_wav(audiofile)  # Convert file to PCM for running timbral models
     for name, function in [
         ('brightness', timbral_brightness), 
         ('depth', timbral_depth), 
@@ -195,7 +210,7 @@ def ac_timbral_models(audiofile, ac_descriptors):
         ('sharpness', timbral_sharpness)
     ]:
         try:
-            value = function(audiofile)
+            value = function(converted_filename)
         except Exception as e:
             logger.debug('{0}: analysis failed ({1}, "{2}")'.format(audiofile, function, e))
             value = 0
@@ -258,6 +273,9 @@ def build_graph(ac_descriptors, uri=None):
         #('TimbreMetallic', 'metallic', None),
         #('TimbreReverb', 'reverb', None),
         #('TimbreRoughness', 'roughness', None),
+        #('TimbreBoominess', 'booming', None),
+        #('TimbreWarmth', 'warmth', None),
+        #('TimbreSharpness', 'sharpness', None),
     ]:
         if value_field in ac_descriptors:
             # Only include descriptors if present in analysis
