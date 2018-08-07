@@ -52,6 +52,7 @@ def estimate_number_of_events(audiofile, region_energy_thr=2, silence_thr_scale=
     Returns list of activity "onsets" for an audio signal based on its energy envelope. 
     This is more like "activity detecton" than "onset detection".
     """    
+    logger.debug('{0}: estimating number of sound events'.format(audiofile))
 
     def group_regions(regions, group_regions_ms):
         """
@@ -110,7 +111,8 @@ def estimate_number_of_events(audiofile, region_energy_thr=2, silence_thr_scale=
     # Implementation based on https://stackoverflow.com/questions/43258896/extract-subarrays-of-numpy-array-whose-values-are-above-a-threshold
     mask = np.concatenate(([False], envelope > silence_thr, [False] ))
     idx = np.flatnonzero(mask[1:] != mask[:-1])
-    regions = [(t[idx[i]], t[idx[i+1]], np.sum(envelope[idx[i]:idx[i+1]]**2)) for i in range(0,len(idx),2)]  # Energy is a list of tuples like (start_time, end_time, energy)
+    idx -= 1  # Avoid index out of bounds (0-index)
+    regions = [(t[idx[i]], t[idx[i+1]], np.sum(envelope[idx[i]:idx[i+1]]**2)) for i in range(0, len(idx), 2)]  # Energy is a list of tuples like (start_time, end_time, energy)
     regions = [region for region in regions if region[2] > region_energy_thr] # Discard those below region_energy_thr
     
     # Group detected regions that happen close together
