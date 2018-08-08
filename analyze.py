@@ -122,8 +122,17 @@ def estimate_number_of_events(audiofile, region_energy_thr=2, silence_thr_scale=
     return len(regions)  # Return number of sound events detected
 
 
+_number_of_events = None
 def is_single_event(audiofile):
-    return estimate_number_of_events(audiofile) == 1
+    '''
+    Estimate if the audio signal contains one single event using the 'estimate_number_of_events'
+    function above. We store the result of 'estimate_number_of_events' in a global variable so
+    it can be reused in the different calls of 'is_single_event'.
+    '''
+    global _number_of_events
+    if _number_of_events is None:
+        _number_of_events = estimate_number_of_events(audiofile)
+    return _number_of_events == 1
 
 
 def ac_general_description(audiofile, fs_pool, ac_descriptors):
@@ -184,9 +193,8 @@ def ac_pitch_description(audiofile, fs_pool, ac_descriptors):
     ac_descriptors["note_frequency"] = pitch_median
     ac_descriptors["note_confidence"] = float(fs_pool['lowlevel.pitch_instantaneous_confidence.median'])
 
-    # As a post-processing step, check if 'single_event' descriptor has been computed. If that is the
-    # case and the estimate is that the sound has more than one event, set note confidence to 0.
-    if 'single_event' in ac_descriptors and not ac_descriptors['single_event']:
+    # As a post-processing step, set note confidence to 0 if audio has more than one event
+    if is_single_event(audiofile):
         ac_descriptors["note_confidence"] = 0.0
 
 
@@ -328,7 +336,11 @@ def analyze(audiofile, outfile, compute_timbral_models=False, compute_descriptor
     if compute_descriptors_music_samples:
         ac_pitch_description(audiofile, fs_pool, ac_descriptors)
     if compute_timbral_models:
-        ac_timbral_models(audiofile, ac_descriptors)
+        if is_single_event(audiofile):
+            ac_timbral_models(audiofile, ac_descriptors)
+        else:
+            logger.debug('{0}: skipping computation of timbral models as audio is not single event'.format(audiofile))
+
     if compute_descriptors_music_pieces:
         ac_highlevel_music_description(audiofile, ac_descriptors)
     
