@@ -194,7 +194,7 @@ def ac_pitch_description(audiofile, fs_pool, ac_descriptors):
     ac_descriptors["note_confidence"] = float(fs_pool['lowlevel.pitch_instantaneous_confidence.median'])
 
     # As a post-processing step, set note confidence to 0 if audio has more than one event
-    if is_single_event(audiofile):
+    if not is_single_event(audiofile):
         ac_descriptors["note_confidence"] = 0.0
 
 
