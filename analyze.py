@@ -2,6 +2,7 @@ import sys
 import os
 import json
 import math
+import hashlib
 import subprocess
 import numpy as np
 import logging
@@ -9,6 +10,7 @@ import pyld
 import rdflib
 import essentia
 import uuid
+import ffmpeg
 essentia.log.infoActive = False
 essentia.log.warningActive = False
 from essentia.standard import MusicExtractor, FreesoundExtractor, MonoLoader, MonoWriter
@@ -17,6 +19,8 @@ from rdflib.serializer import Serializer
 from rdflib.namespace import RDF
 from argparse import ArgumentParser
 from timbral_models import timbral_brightness, timbral_depth, timbral_hardness,  timbral_roughness, timbral_booming, timbral_warmth, timbral_sharpness
+
+MORE_THAN_2_CHANNELS_EXCEPTION_MATCH_TEXT = 'Audio file has more than 2 channels'
 
 logger = logging.getLogger()
 
@@ -40,11 +44,27 @@ ac_mapping = {
     "log_attack_time": "sfx.logattacktime",
 }
 
+def convert_to_wav(audiofile, samplerate=44100):
+        logger.debug('{0}: converting to WAV'.format(audiofile))
+
+        # Convert to mono WAV using ffmpeg
+        output_filename = '/tmp/{0}-converted.wav'.format(hashlib.md5(audiofile.encode('utf-8')).hexdigest())
+        if not os.path.exists(output_filename):
+            ffmpeg.input(audiofile).output(output_filename, ac=1).run(quiet=True, overwrite_output=True)
+        
+        return output_filename
 
 def run_freesound_extractor(audiofile):
     logger.debug('{0}: running Essentia\'s FreesoundExtractor'.format(audiofile))
 
-    fs_pool, _ = FreesoundExtractor()(audiofile)
+    try:
+        fs_pool, _ = FreesoundExtractor()(audiofile)
+    except RuntimeError as e:
+        if MORE_THAN_2_CHANNELS_EXCEPTION_MATCH_TEXT in str(e):
+            converted_audiofile = convert_to_wav(audiofile)
+            fs_pool, _ = FreesoundExtractor()(converted_audiofile)
+        else:
+            raise e
     return fs_pool
 
 
@@ -95,7 +115,12 @@ def estimate_number_of_events(audiofile, region_energy_thr=2, silence_thr_scale=
 
     # Load audio file
     sample_rate = 44100
-    audio_file = MonoLoader(filename=audiofile, sampleRate=sample_rate)
+    try:
+        audio_file = MonoLoader(filename=audiofile, sampleRate=sample_rate)
+    except RuntimeError as e:
+        if MORE_THAN_2_CHANNELS_EXCEPTION_MATCH_TEXT in str(e):
+            converted_audiofile = convert_to_wav(audiofile)
+            audio_file = MonoLoader(filename=converted_audiofile, sampleRate=sample_rate)
     audio = audio_file.compute()
     t = np.linspace(0, len(audio)/sample_rate, num=len(audio))
     
@@ -200,15 +225,6 @@ def ac_pitch_description(audiofile, fs_pool, ac_descriptors):
 
 def ac_timbral_models(audiofile, ac_descriptors):
     logger.debug('{0}: computing timbral models'.format(audiofile))
-
-    def convert_to_wav(audiofile, samplerate=44100):
-        logger.debug('{0}: converting to WAV'.format(audiofile))
-
-        # Convert to WAV using Essentia so that timbral models always read WAV file
-        output_filename = '/tmp/{0}-converted.wav'.format(str(uuid.uuid4()))
-        audio = MonoLoader(filename=audiofile, sampleRate=samplerate)()
-        MonoWriter(filename=output_filename, format='wav', sampleRate=samplerate)(audio)
-        return output_filename
 
     converted_filename = convert_to_wav(audiofile)  # Convert file to PCM for running timbral models
     for name, function in [

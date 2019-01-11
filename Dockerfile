@@ -80,7 +80,7 @@ RUN apt-get update \
     && cd / && rm -rf /essentia/essentia
 
 # Extra python dependencies
-RUN pip install SoundFile==0.10.2 librosa==0.6.1 scipy==1.1.0
+RUN pip install SoundFile==0.10.2 librosa==0.6.1 scipy==1.1.0 ffmpeg-python==0.1.17
 RUN pip install rdflib==4.2.2 rdflib-jsonld==0.4.0 PyLD==1.0.3
 RUN git clone https://github.com/AudioCommons/timbral_models.git && cd timbral_models && git checkout 310a5b44f6ef3381eb32185e7fea45aa04a1b399 && python setup.py install  # Using commit with division fixes for Python3 (this is temporal, should be set to master once new version is out)
 
