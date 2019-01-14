@@ -59,7 +59,7 @@ RUN apt-get update \
         python3-numpy-dev \
         git \
     && mkdir /essentia && cd /essentia && git clone https://github.com/MTG/essentia.git \
-    && cd /essentia/essentia && git checkout dced162a249cf366935dca8364a9b2a243c8c7d9 \ 
+    && cd /essentia/essentia && git checkout caf4ed45e5bc2e87e8734ea8b9d0491ea891c617 \ 
     && ./waf configure --with-examples --with-python --with-gaia \
     && ./waf && ./waf install && ldconfig \
     &&  apt-get remove -y \
@@ -82,8 +82,9 @@ RUN apt-get update \
 # Extra python dependencies
 RUN pip install SoundFile==0.10.2 librosa==0.6.1 scipy==1.1.0 ffmpeg-python==0.1.17
 RUN pip install rdflib==4.2.2 rdflib-jsonld==0.4.0 PyLD==1.0.3
-RUN git clone https://github.com/AudioCommons/timbral_models.git && cd timbral_models && git checkout 310a5b44f6ef3381eb32185e7fea45aa04a1b399 && python setup.py install  # Using commit with division fixes for Python3 (this is temporal, should be set to master once new version is out)
 
+# Install version 0.3 (commit 5b68d00feeee1a15ef73b59e9fcbe97eab6a1944) of timbral models
+RUN git clone https://github.com/AudioCommons/timbral_models.git && cd timbral_models && git checkout 5b68d00feeee1a15ef73b59e9fcbe97eab6a1944 && python setup.py install  # Using commit with division fixes for Python3 (this is temporal, should be set to master once new version is out)
 
 # Add high-level models and music extractor configuration
 RUN mkdir -p models
