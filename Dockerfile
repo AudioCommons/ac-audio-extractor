@@ -43,7 +43,7 @@ RUN apt-get update \
     && cd / && rm -r /tmp/gaia
 
 
-# Essentia
+# Essentia (checkout freesound_extractor_update branch at specific commit)
 RUN apt-get update \
     && apt-get install -y \
         build-essential \ 
