@@ -21,6 +21,7 @@ from argparse import ArgumentParser
 from timbral_models import timbral_brightness, timbral_depth, timbral_hardness,  timbral_roughness, timbral_booming, timbral_warmth, timbral_sharpness
 
 MORE_THAN_2_CHANNELS_EXCEPTION_MATCH_TEXT = 'Audio file has more than 2 channels'
+METADATA_READER_EXCEPTION_MATCH_TEXT = 'pcmMetadata cannot read files which are neither "wav" nor "aiff"'
 
 logger = logging.getLogger()
 
@@ -60,7 +61,7 @@ def run_freesound_extractor(audiofile):
     try:
         fs_pool, _ = FreesoundExtractor()(audiofile)
     except RuntimeError as e:
-        if MORE_THAN_2_CHANNELS_EXCEPTION_MATCH_TEXT in str(e):
+        if MORE_THAN_2_CHANNELS_EXCEPTION_MATCH_TEXT in str(e) or METADATA_READER_EXCEPTION_MATCH_TEXT in (str(e)):
             converted_audiofile = convert_to_wav(audiofile)
             fs_pool, _ = FreesoundExtractor()(converted_audiofile)
         else:
