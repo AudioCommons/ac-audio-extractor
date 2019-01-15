@@ -69,7 +69,7 @@ def run_freesound_extractor(audiofile):
     return fs_pool
 
 
-def estimate_number_of_events(audio, sample_rate=44100, region_energy_thr=0.5, silence_thr_scale=4.5, group_regions_ms=50):
+def estimate_number_of_events(audiofile, audio, sample_rate=44100, region_energy_thr=0.5, silence_thr_scale=4.5, group_regions_ms=50):
     """
     Returns list of activity "onsets" for an audio signal based on its energy envelope. 
     This is more like "activity detecton" than "onset detection".
@@ -161,7 +161,7 @@ def is_single_event(audiofile, max_duration=7):
             # If file is longer than max duration, we don't consider it to be single event
             _is_single_event_cache = False
         else:
-            _is_single_event_cache = estimate_number_of_events(audio, sample_rate=sample_rate) == 1
+            _is_single_event_cache = estimate_number_of_events(audiofile, audio, sample_rate=sample_rate) == 1
     return _is_single_event_cache
 
 
