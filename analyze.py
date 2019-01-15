@@ -69,7 +69,7 @@ def run_freesound_extractor(audiofile):
     return fs_pool
 
 
-def estimate_number_of_events(audiofile, region_energy_thr=0.5, silence_thr_scale=4.5, group_regions_ms=50):
+def estimate_number_of_events(audio, sample_rate=44100, region_energy_thr=0.5, silence_thr_scale=4.5, group_regions_ms=50:
     """
     Returns list of activity "onsets" for an audio signal based on its energy envelope. 
     This is more like "activity detecton" than "onset detection".
@@ -115,14 +115,6 @@ def estimate_number_of_events(audiofile, region_energy_thr=0.5, silence_thr_scal
         return grouped_regions
 
     # Load audio file
-    sample_rate = 44100
-    try:
-        audio_file = MonoLoader(filename=audiofile, sampleRate=sample_rate)
-    except RuntimeError as e:
-        if MORE_THAN_2_CHANNELS_EXCEPTION_MATCH_TEXT in str(e):
-            converted_audiofile = convert_to_wav(audiofile)
-            audio_file = MonoLoader(filename=converted_audiofile, sampleRate=sample_rate)
-    audio = audio_file.compute()
     t = np.linspace(0, len(audio)/sample_rate, num=len(audio))
     
     # Compute envelope and average signal energy
@@ -148,17 +140,29 @@ def estimate_number_of_events(audiofile, region_energy_thr=0.5, silence_thr_scal
     return len(regions)  # Return number of sound events detected
 
 
-_number_of_events = None
-def is_single_event(audiofile):
+_is_single_event_cache = None
+def is_single_event(audiofile, max_duration=7):
     '''
     Estimate if the audio signal contains one single event using the 'estimate_number_of_events'
     function above. We store the result of 'estimate_number_of_events' in a global variable so
     it can be reused in the different calls of 'is_single_event'.
     '''
-    global _number_of_events
-    if _number_of_events is None:
-        _number_of_events = estimate_number_of_events(audiofile)
-    return _number_of_events == 1
+    global _is_single_event_cache
+    if _is_single_event_cache is None:
+        sample_rate = 44100
+        try:
+            audio_file = MonoLoader(filename=audiofile, sampleRate=sample_rate)
+        except RuntimeError as e:
+            if MORE_THAN_2_CHANNELS_EXCEPTION_MATCH_TEXT in str(e):
+                converted_audiofile = convert_to_wav(audiofile)
+                audio_file = MonoLoader(filename=converted_audiofile, sampleRate=sample_rate)
+        audio = audio_file.compute()
+        if len(audio)/sample_rate > max_duration:
+            # If file is longer than max duration, we don't consider it to be single event
+            _is_single_event_cache = False
+        else:
+            _is_single_event_cache = estimate_number_of_events(audio, sample_rate=sample_rate) == 1
+    return _is_single_event_cache
 
 
 def ac_general_description(audiofile, fs_pool, ac_descriptors):
