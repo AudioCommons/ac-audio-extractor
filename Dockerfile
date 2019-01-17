@@ -59,7 +59,7 @@ RUN apt-get update \
         python3-numpy-dev \
         git \
     && mkdir /essentia && cd /essentia && git clone https://github.com/MTG/essentia.git \
-    && cd /essentia/essentia && git checkout caf4ed45e5bc2e87e8734ea8b9d0491ea891c617 \ 
+    && cd /essentia/essentia && git checkout 0ddaedd3ba8988ae759cc746ff7e4ad995dcfeae \ 
     && ./waf configure --with-examples --with-python --with-gaia \
     && ./waf && ./waf install && ldconfig \
     &&  apt-get remove -y \
