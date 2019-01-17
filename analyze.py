@@ -213,7 +213,7 @@ def ac_pitch_description(audiofile, fs_pool, ac_descriptors):
         return '%s%i' % (['C', 'C#', 'D', 'D#', 'E', 'E#', 'F', 'F#', 'G', 'A', 'A#', 'B'][note], octave - 1)
 
     def frequency_to_midi_note(frequency):
-        return int(69 + (12 * math.log(frequency / 440.0)) / math.log(2))
+        return int(round(69 + (12 * math.log(frequency / 440.0)) / math.log(2)))
     
     pitch_median = float(fs_pool['lowlevel.pitch.median'])
     midi_note = frequency_to_midi_note(pitch_median)
@@ -222,10 +222,6 @@ def ac_pitch_description(audiofile, fs_pool, ac_descriptors):
     ac_descriptors["note_name"] = note_name
     ac_descriptors["note_frequency"] = pitch_median
     ac_descriptors["note_confidence"] = float(fs_pool['lowlevel.pitch_instantaneous_confidence.median'])
-
-    # As a post-processing step, set note confidence to 0 if audio has more than one event
-    if not is_single_event(audiofile):
-        ac_descriptors["note_confidence"] = 0.0
 
 
 def ac_timbral_models(audiofile, ac_descriptors):
