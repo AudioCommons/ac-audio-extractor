@@ -3,9 +3,23 @@
 <head>
     <script src="NexusUI.js"></script>
     <script src="freesound.js"></script>
+    <link href='https://fonts.googleapis.com/css?family=Rajdhani:400,700' rel='stylesheet' type='text/css'>
+    <link href='https://fonts.googleapis.com/css?family=Roboto:300,500' rel='stylesheet' type='text/css'>
     <style>
         body {
-            font-family: sans-serif;
+            font-family: 'Roboto', sans-serif;
+            font-weight: 100;
+        }
+
+        h1 {
+            font-family: 'Rajdhani', sans-serif;
+            text-transform: uppercase;
+            color: rgb(6, 95, 95);
+        }
+
+        #header{
+            max-width: 1100px; 
+            margin-top: 30px; 
         }
 
         #queryControls{
@@ -51,49 +65,58 @@
 </head>
 
 <body>
-    <div id="queryControls">
-        <div class="controlsRow">
-            <div id="query" class="control" style="height:52px;width:1050px;">
-                Query<br>
-                <input id="queryStringInput" type="text" placeholder="Query terms..." class="queryTerms"/>
+    <div style="width:1120px;margin: auto;">
+        <div id="header" style="text-align: center;">
+            <img src="audio-commons-logo-horizontal.png" style="max-width:500px;width: 90%;"/>
+            <h1>Audio Commons Audio Extractor Demonstrator</h1>
+            <p style="padding-left:100px;padding-right:100px;">This website allows you to search in <b>Freesound</b> and filter using the Audio Commons descriptors for <b>music samples</b> developed during the Audio Commons project.
+            The Audio Commons Audio Extractor is available in this <a href="https://github.com/AudioCommons/ac-audio-extractor" target="_blank">source code repository</a>.
+            </p>
+        </div>
+        <div id="queryControls">
+            <div class="controlsRow">
+                <div id="query" class="control" style="height:52px;width:1045px;">
+                    Query<br>
+                    <input id="queryStringInput" type="text" placeholder="Query terms..." class="queryTerms"/>
+                </div>
+            </div>
+            <div class="controlsColumn">
+                <div id="singleEventDivControl" class="control disabled" style="height:52px;" onclick="toggleFilter(event, 'singleEventDivControl');">
+                    Single event
+                    <div id="singleEventControl" style="margin-top:5px;"></div>
+                </div>
+                <div id="loopDivControl" class="control disabled" style="height:52px;" onclick="toggleFilter(event, 'loopDivControl');">
+                    Loop
+                    <div id="loopControl" style="margin-top: 5px;"></div>
+                </div>
+            </div>
+            <div class="controlsColumn">
+                <div id="tonalityDivControl" class="control disabled" style="height:52px;" onclick="toggleFilter(event, 'tonalityDivControl');">
+                    Tonality<br>
+                    <div id="tonalityControlA" style="display: inline-block; margin-top: 5px;"></div>
+                    <div id="tonalityControlB" style="display: inline-block;"></div>
+                    <div id="tonalityConfidenceControl" style="display: inline-block; vertical-align: bottom;"></div>
+                </div>
+                <div id="tempoDivControl" class="control disabled" style="height:52px;" onclick="toggleFilter(event, 'tempoDivControl');">
+                    Tempo<br>
+                    <div id="tempoControl" style="display: inline-block; margin-top: 5px;"></div>
+                    <div id="tempoConfidenceControl" style="display: inline-block; vertical-align: bottom;"></div>
+                </div>
+            </div>
+            <div class="controlsColumn">
+                <div id="pitchDivControl" class="control disabled" style="height:150px;" onclick="toggleFilter(event, 'pitchDivControl');">
+                    Pitch<br>
+                    <div id="pitchControl" style="display: inline-block;"></div>
+                    <div id="pitchConfidenceControl" style="display: inline-block;"></div>
+                </div>
+            </div>
+            <div class="controlsRow">
+                <div id="searchButton"></div>
             </div>
         </div>
-        <div class="controlsColumn">
-            <div id="singleEventDivControl" class="control disabled" style="height:52px;" onclick="toggleFilter(event, 'singleEventDivControl');">
-                Single event
-                <div id="singleEventControl" style="margin-top:5px;"></div>
-            </div>
-            <div id="loopDivControl" class="control disabled" style="height:52px;" onclick="toggleFilter(event, 'loopDivControl');">
-                Loop
-                <div id="loopControl" style="margin-top: 5px;"></div>
-            </div>
-        </div>
-        <div class="controlsColumn">
-            <div id="tonalityDivControl" class="control disabled" style="height:52px;" onclick="toggleFilter(event, 'tonalityDivControl');">
-                Tonality<br>
-                <div id="tonalityControlA" style="display: inline-block; margin-top: 5px;"></div>
-                <div id="tonalityControlB" style="display: inline-block;"></div>
-                <div id="tonalityConfidenceControl" style="display: inline-block; vertical-align: bottom;"></div>
-            </div>
-            <div id="tempoDivControl" class="control disabled" style="height:52px;" onclick="toggleFilter(event, 'tempoDivControl');">
-                Tempo<br>
-                <div id="tempoControl" style="display: inline-block; margin-top: 5px;"></div>
-                <div id="tempoConfidenceControl" style="display: inline-block; vertical-align: bottom;"></div>
-            </div>
-        </div>
-        <div class="controlsColumn">
-            <div id="pitchDivControl" class="control disabled" style="height:150px;" onclick="toggleFilter(event, 'pitchDivControl');">
-                Pitch<br>
-                <div id="pitchControl" style="display: inline-block;"></div>
-                <div id="pitchConfidenceControl" style="display: inline-block;"></div>
-            </div>
-        </div>
-        <div class="controlsRow">
-            <div id="searchButton"></div>
-        </div>
-    </div>
 
-    <div id="results"></div>
+        <div id="results"></div>
+    </div>
 
     <script>
 
@@ -226,11 +249,11 @@
                 filterTerms.push('ac_tempo_confidence:[' + tempoConfidenceControlObject.value + '+TO+1.0]');
             }
 
-            if (!document.getElementById("pitchControl").classList.contains('disabled')){
+            if (!document.getElementById("pitchDivControl").classList.contains('disabled')){
                 filterTerms.push('ac_note_midi:' + selectedPianoNote);
                 filterTerms.push('ac_note_confidence:[' + pitchConfidenceControlObject.value + '+TO+1.0]');
             }
-
+            
             return filterTerms.join(' ');
         }
 
@@ -240,11 +263,18 @@
 
         function doSearch(){
             var filterString = buildFilterString();
-            console.log(filterString);
             var query = document.getElementById('queryStringInput').value;
-            var fields = 'id,name,username,license,ac_analysis';
+            var fields = 'id,name,username,license,ac_analysis,url';
+            var page_size = 30;
 
-            freesound.textSearch(query, {page:1, filter:filterString, fields:fields, page_size:50},
+            var params = { page: 1, fields: fields, page_size: page_size };
+            if (filterString !== ""){
+                params.filter = filterString;
+            }
+
+            console.log('Searching with query "' + query + '" and filter "'  + filterString + '"');
+
+            freesound.textSearch(query, params,
             function(sounds){
                 if (sounds.count == 0) {
                     document.getElementById("results").innerHTML = "Your query returned 0 results...";
@@ -255,10 +285,13 @@
                 htmlResults += "Your query returned " + sounds.count + " results! These are the first ones:<br><br>";
 
                 for (sound of sounds.results){  
-                    htmlResults += sound.name + ' by ' + sound.username + '<br>'
-                    htmlResults += getFreesoundEmbed(sound.id, 120, 80);
-                    htmlResults += sound['ac_analysis']
-                    htmlResults += '<br>';
+                    htmlResults += '<a href="' + sound.url + '" target="_blank">' + sound.name + '</a> by <a href="https://freesound.org/people/' + sound.username + '/" target="_blank">' + sound.username + '</a><br>'
+                    htmlResults += getFreesoundEmbed(sound.id, 130, 80);
+                    htmlResults += '<pre>';
+                    if (sound['ac_analysis']){
+                        htmlResults += JSON.stringify(sound['ac_analysis'], undefined, 2)
+                    }
+                    htmlResults += '</pre><br>';
                 }
                
                 document.getElementById("results").innerHTML = htmlResults;
