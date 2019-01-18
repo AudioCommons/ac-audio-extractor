@@ -4,7 +4,7 @@ The Audio Commons Audio Extractor is a tool for analyzing audio files and extrac
 
 To facilitate its usage, the tool has been *dockerized* and should run efforlessly in any platform with [Docker](https://www.docker.com/) installed. Below you'll find some instructions for running the tool as well as the full list of included audio features.
 
-Checkout the [web deomsntrator](http://www.audiocommons.org/ac-audio-extractor/web_demonstrator/) that shows the power of some of the music properties extracted with this tool.
+Checkout the [web demonstrator](http://www.audiocommons.org/ac-audio-extractor/web_demonstrator/) that shows the power of some of the music properties extracted with this tool.
 
 ## Running the audio extractor
 
