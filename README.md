@@ -4,30 +4,31 @@ The Audio Commons Audio Extractor is a tool for analyzing audio files and extrac
 
 To facilitate its usage, the tool has been *dockerized* and should run efforlessly in any platform with [Docker](https://www.docker.com/) installed. Below you'll find some instructions for running the tool as well as the full list of included audio features.
 
+Checkout the [web deomsntrator](http://www.audiocommons.org/ac-audio-extractor/web_demonstrator/) that shows the power of some of the music properties extracted with this tool.
 
 ## Running the audio extractor
 
 The Audio Commons Audio Extractor is expected to be used as a command line tool and run from a terminal. Assuming you have Docker installed, you can easily analyze an audio file using the following command (the audio file must be located in the same folder from where you run the command, be aware that the first time you run this command it will take a lot of time as Docker will need to download the actual Audio Commons Audio Extractor tool first):
 
 ```
-docker run -it --rm -v `pwd`:/tmp mtgupf/ac-audio-extractor:v2 -i /tmp/audio.wav -o /tmp/analysis.json -smt
+docker run -it --rm -v `pwd`:/tmp mtgupf/ac-audio-extractor:v3 -i /tmp/audio.wav -o /tmp/analysis.json -smt
 ```
 
 The example above mounts the current directory ``pwd`` in the virtual `tmp` directory inside Docker. The output file `audio.json` is also written in `tmp`, and therefore appears in the current directory. You can also mount different volumes and specify paths for input audio and analysis output using the following command (read the [Docker volumes](https://docs.docker.com/storage/volumes/) documentation for more information):
 
 ```
-docker run -it --rm -v /local/path/to/your/audio/file.wav:/audio.wav -v /local/path/to/output_directory/:/outdir mtgupf/ac-audio-extractor:v2 -i /audio.wav -o /outdir/analysis.json  -smt
+docker run -it --rm -v /local/path/to/your/audio/file.wav:/audio.wav -v /local/path/to/output_directory/:/outdir mtgupf/ac-audio-extractor:v3 -i /audio.wav -o /outdir/analysis.json  -smt
 ```
 
 You can use the `--help` flag with the Audio Commons Audio Extractor so see a complete list of all available options:
 
 ```
-docker run -it --rm -v `pwd`:/tmp mtgupf/ac-audio-extractor:v2 --help
+docker run -it --rm -v `pwd`:/tmp mtgupf/ac-audio-extractor:v3 --help
 
 uusage: analyze.py [-h] [-v] [-t] [-m] [-s] -i INPUT -o OUTPUT [-f FORMAT]
                   [-u URI]
 
-Audio Commons Audio Extractor (v2). Analyzes a given audio file and writes
+Audio Commons Audio Extractor (v3). Analyzes a given audio file and writes
 results to a JSON file.
 
 optional arguments:
@@ -170,7 +171,7 @@ The Audio Commons audio extractor can write the analysis output to a **JSON** fi
 There is no need to build the Docker image locally because Docker will automatically retrieve the image from the remote [Docker Hub](https://hub.docker.com). However, if you need a custom version of the image you can also build it locally using the instructions in the `Dockerfile` of this repository. Use the following command:
 
 ```
-docker build -t mtgupf/ac-audio-extractor:v2 .
+docker build -t mtgupf/ac-audio-extractor:v3 .
 ```
 
 ### Pushing the image to MTG's Docker Hub
@@ -178,7 +179,7 @@ docker build -t mtgupf/ac-audio-extractor:v2 .
 The pre-built image for the Audio Commons annotations tools is hosted in [MTG](http://mtg.upf.edu/)'s Docker Hub account. To push a new version of the image use the following command (and change the tag if needed):
 
 ```
-docker push mtgupf/ac-audio-extractor:v2
+docker push mtgupf/ac-audio-extractor:v3
 ```
 
 This is only meant for the admins/maintainers of the image. You'll need a Docker account with wrtie access to MTG's Docker Hub space.
