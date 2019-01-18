@@ -114,6 +114,26 @@
                 </div>
             </div>
             <div class="controlsRow">
+                <div class="controlsColumn">
+                    <div id="brightnessDivControl"  class="control disabled" onclick="toggleFilter(event, 'brightnessDivControl');">
+                        Brightness
+                        <div id="brightnessControl" style=" margin-top: 5px;"></div>
+                    </div>
+                </div>
+                <div class="controlsColumn">
+                    <div id="hardnessDivControl" class="control disabled" onclick="toggleFilter(event, 'hardnessDivControl');">
+                        Hardness
+                        <div id="hardnessControl" style=" margin-top: 5px;"></div>
+                    </div>
+                </div>
+                <div class="controlsColumn">
+                    <div id="depthDivControl" class="control disabled" onclick="toggleFilter(event, 'depthDivControl');">
+                        Depth
+                        <div id="depthControl" style=" margin-top: 5px;"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="controlsRow">
                 <div id="searchButton"></div>
             </div>
         </div>
@@ -205,6 +225,30 @@
             'value': 0.8,
         })
 
+        var brightnessControlObject = new Nexus.Slider('#brightnessControl', {
+            'size': [319, 30],
+            'min': 0,
+            'max': 100,
+            'step': 1,
+            'value': 50,
+        })
+
+        var hardnessControlObject = new Nexus.Slider('#hardnessControl', {
+            'size': [319, 30],
+            'min': 40,  // There don't seem to be sounds with hardness below this value. We should plot histograms for adjusting sliders better.  
+            'max': 100,
+            'step': 1,
+            'value': 50,
+        })
+
+        var depthControlObject = new Nexus.Slider('#depthControl', {
+            'size': [319, 30],
+            'min': 0,
+            'max': 100,
+            'step': 1,
+            'value': 50,
+        })
+
         var searchButton = new Nexus.TextButton('#searchButton',{
             'size': [150,50],
             'state': false,
@@ -255,6 +299,19 @@
             if (!document.getElementById("pitchDivControl").classList.contains('disabled')){
                 filterTerms.push('ac_note_midi:' + selectedPianoNote);
                 filterTerms.push('ac_note_confidence:[' + pitchConfidenceControlObject.value + '+TO+1.0]');
+            }
+
+            var TIMBRAL_DESCRIPTORS_FILTER_WIDTH = 30;
+            if (!document.getElementById("brightnessDivControl").classList.contains('disabled')) {
+                filterTerms.push('ac_brightness:[' + (brightnessControlObject.value - TIMBRAL_DESCRIPTORS_FILTER_WIDTH/2) + '+TO+' + (brightnessControlObject.value + TIMBRAL_DESCRIPTORS_FILTER_WIDTH / 2) + ']');
+            }
+
+            if (!document.getElementById("depthDivControl").classList.contains('disabled')) {
+                filterTerms.push('ac_depth:[' + (depthControlObject.value - TIMBRAL_DESCRIPTORS_FILTER_WIDTH / 2) + '+TO+' + (depthControlObject.value + TIMBRAL_DESCRIPTORS_FILTER_WIDTH / 2) + ']');
+            }
+
+            if (!document.getElementById("hardnessDivControl").classList.contains('disabled')) {
+                filterTerms.push('ac_hardness:[' + (hardnessControlObject.value - TIMBRAL_DESCRIPTORS_FILTER_WIDTH / 2) + '+TO+' + (hardnessControlObject.value + TIMBRAL_DESCRIPTORS_FILTER_WIDTH / 2) + ']');
             }
             
             return filterTerms.join(' ');

@@ -56,6 +56,7 @@
             if (paramStr){
                 uri = uri +"?"+ paramStr;
             }
+            console.log(uri);
             
             if (typeof module !== 'undefined'){ // node.js
                 var http = require("http");
