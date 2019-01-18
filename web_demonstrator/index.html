@@ -1,0 +1,275 @@
+<html>
+
+<head>
+    <script src="NexusUI.js"></script>
+    <script src="freesound.js"></script>
+    <style>
+        body {
+            font-family: sans-serif;
+        }
+
+        #queryControls{
+            padding: 20px;
+            max-width: 1100px;
+            overflow: scroll;
+            white-space: nowrap;
+        }
+
+        #results{
+            padding: 20px;
+            max-width: 1100px;
+        }
+
+        .control {
+            padding: 20px;
+            background-color: rgb(6, 95, 95); 
+            border-radius: 5px;
+            margin-bottom: 5px;
+            color:white;
+        }
+
+        .disabled {
+            filter: grayscale(1) opacity(0.3) ;
+        }
+
+        .controlsColumn {
+            display: inline-block;
+            vertical-align: top;
+        }
+
+        .queryTerms {
+            margin-top:5px; 
+            border:0;
+            border-radius: 2px;
+            padding-left: 5px;
+            font-size: 100%;
+            background-color: rgb(238, 238, 238);
+            height: 30px;
+            width: 100%;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="queryControls">
+        <div class="controlsRow">
+            <div id="query" class="control" style="height:52px;width:1050px;">
+                Query<br>
+                <input id="queryStringInput" type="text" placeholder="Query terms..." class="queryTerms"/>
+            </div>
+        </div>
+        <div class="controlsColumn">
+            <div id="singleEventDivControl" class="control disabled" style="height:52px;" onclick="toggleFilter(event, 'singleEventDivControl');">
+                Single event
+                <div id="singleEventControl" style="margin-top:5px;"></div>
+            </div>
+            <div id="loopDivControl" class="control disabled" style="height:52px;" onclick="toggleFilter(event, 'loopDivControl');">
+                Loop
+                <div id="loopControl" style="margin-top: 5px;"></div>
+            </div>
+        </div>
+        <div class="controlsColumn">
+            <div id="tonalityDivControl" class="control disabled" style="height:52px;" onclick="toggleFilter(event, 'tonalityDivControl');">
+                Tonality<br>
+                <div id="tonalityControlA" style="display: inline-block; margin-top: 5px;"></div>
+                <div id="tonalityControlB" style="display: inline-block;"></div>
+                <div id="tonalityConfidenceControl" style="display: inline-block; vertical-align: bottom;"></div>
+            </div>
+            <div id="tempoDivControl" class="control disabled" style="height:52px;" onclick="toggleFilter(event, 'tempoDivControl');">
+                Tempo<br>
+                <div id="tempoControl" style="display: inline-block; margin-top: 5px;"></div>
+                <div id="tempoConfidenceControl" style="display: inline-block; vertical-align: bottom;"></div>
+            </div>
+        </div>
+        <div class="controlsColumn">
+            <div id="pitchDivControl" class="control disabled" style="height:150px;" onclick="toggleFilter(event, 'pitchDivControl');">
+                Pitch<br>
+                <div id="pitchControl" style="display: inline-block;"></div>
+                <div id="pitchConfidenceControl" style="display: inline-block;"></div>
+            </div>
+        </div>
+        <div class="controlsRow">
+            <div id="searchButton"></div>
+        </div>
+    </div>
+
+    <div id="results"></div>
+
+    <script>
+
+        /* UI stuff */
+
+        var singleEventControlObject = new Nexus.Toggle('#singleEventControl', {
+            'size': [40, 20],
+            'state': false
+        })
+
+        var loopControlObject = new Nexus.Toggle('#loopControl', {
+            'size': [40, 20],
+            'state': false
+        })
+
+        var tonalityControlAControlObject = new Nexus.Select('#tonalityControlA',{
+            'size': [100,30],
+            'options': ['A', 'A#', 'B', 'C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#']
+        })
+
+        var tonalityControlBControlObject = new Nexus.Select('#tonalityControlB',{
+            'size': [100,30],
+            'options': ['major', 'minor']
+        })
+
+        var tonalityConfidenceControlObject = new Nexus.Dial('#tonalityConfidenceControl',{
+            'size': [30,30],
+            'min': 0,
+            'max': 1,
+            'step': 0.01,
+            'value': 0.8,
+        })
+
+        var tempoControlObject = new Nexus.Number('#tempoControl',{
+            'size': [60,30],
+            'value': 120,
+            'min': 40,
+            'max': 300,
+            'step': 1
+        })
+
+        var tempoConfidenceControlObject = new Nexus.Dial('#tempoConfidenceControl',{
+            'size': [30,30],
+            'min': 0,
+            'max': 1,
+            'step': 0.01,
+            'value': 0.8,
+        })
+
+        var selectedPianoNote = 64;
+        var pitchControlObject = new Nexus.Piano('#pitchControl',{
+            'size': [600,125],
+            'mode': 'button',
+            'lowNote': 30,
+            'highNote': 100
+        })
+        pitchControlObject.toggleKey(64, true);
+
+        function pianoEventHandler(note){
+            selectedPianoNote = note;
+            pitchControlObject.removeAllListeners();
+            for (var i=pitchControlObject.settings.lowNote; i<=pitchControlObject.settings.highNote; i++){
+                if (i === note){
+                    pitchControlObject.toggleKey(i, true);
+                } else {
+                    pitchControlObject.toggleKey(i, false);
+                }
+            }
+            pitchControlObject.on('change',function(v) {
+                pianoEventHandler(v.note);
+            })
+        }
+
+        pitchControlObject.on('change',function(v) {
+            pianoEventHandler(v.note);
+        })
+
+        var pitchConfidenceControlObject = new Nexus.Dial('#pitchConfidenceControl',{
+            'size': [30,30],
+            'min': 0,
+            'max': 1,
+            'step': 0.01,
+            'value': 0.8,
+        })
+
+        var searchButton = new Nexus.TextButton('#searchButton',{
+            'size': [150,50],
+            'state': false,
+            'text': 'Search',
+            'alternate': false
+        })
+
+        searchButton.on('click', function(){
+            doSearch();
+        });
+
+        function toggleFilter(event, elementID){
+            if (event.target.classList.contains('control')){
+                var element = document.getElementById(elementID);
+                if (element.classList.contains("disabled")){
+                    element.classList.remove("disabled");
+                } else {
+                    element.classList.add("disabled");
+                }
+            }
+        }
+
+        /* Freesound interaction stuff */
+
+        freesound.setToken("PYENx7ntOXOzvXfoRzICwWdDzb6wdBsl0E5FThtx");
+
+        function buildFilterString(){
+            var filterTerms = [];
+
+            if (!document.getElementById("singleEventDivControl").classList.contains('disabled')){
+                filterTerms.push('ac_single_event:' + singleEventControlObject.state);
+            }
+
+            if (!document.getElementById("loopDivControl").classList.contains('disabled')){
+                filterTerms.push('ac_loop:' + loopControlObject.state);
+            }
+
+            if (!document.getElementById("tonalityDivControl").classList.contains('disabled')){
+                filterTerms.push('ac_tonality:"' + tonalityControlAControlObject.value + ' ' + tonalityControlBControlObject.value + '"');
+                filterTerms.push('ac_tonality_confidence:[' + tonalityConfidenceControlObject.value + '+TO+1.0]');
+            }
+
+            if (!document.getElementById("tempoDivControl").classList.contains('disabled')){
+                filterTerms.push('ac_tempo:' + tempoControlObject.value);
+                filterTerms.push('ac_tempo_confidence:[' + tempoConfidenceControlObject.value + '+TO+1.0]');
+            }
+
+            if (!document.getElementById("pitchControl").classList.contains('disabled')){
+                filterTerms.push('ac_note_midi:' + selectedPianoNote);
+                filterTerms.push('ac_note_confidence:[' + pitchConfidenceControlObject.value + '+TO+1.0]');
+            }
+
+            return filterTerms.join(' ');
+        }
+
+        function getFreesoundEmbed(sound_id, width, height){
+            return '<iframe frameborder="0" scrolling="no" src="https://freesound.org/embed/sound/iframe/' + sound_id + '/simple/medium_no_info/" width="' + width + '" height="' + height + '"></iframe>'
+        }
+
+        function doSearch(){
+            var filterString = buildFilterString();
+            console.log(filterString);
+            var query = document.getElementById('queryStringInput').value;
+            var fields = 'id,name,username,license,ac_analysis';
+
+            freesound.textSearch(query, {page:1, filter:filterString, fields:fields, page_size:50},
+            function(sounds){
+                if (sounds.count == 0) {
+                    document.getElementById("results").innerHTML = "Your query returned 0 results...";
+                    return;
+                }
+
+                var htmlResults = "";
+                htmlResults += "Your query returned " + sounds.count + " results! These are the first ones:<br><br>";
+
+                for (sound of sounds.results){  
+                    htmlResults += sound.name + ' by ' + sound.username + '<br>'
+                    htmlResults += getFreesoundEmbed(sound.id, 120, 80);
+                    htmlResults += sound['ac_analysis']
+                    htmlResults += '<br>';
+                }
+               
+                document.getElementById("results").innerHTML = htmlResults;
+            },function(){ 
+                document.getElementById("results").innerHTML = "Error while searching Freesound...";
+            }
+        );
+        }
+
+    </script>
+
+</body>
+
+</html>
