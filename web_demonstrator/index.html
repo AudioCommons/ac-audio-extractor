@@ -13,6 +13,7 @@
             font-family: 'Roboto', sans-serif;
             font-weight: 100;
             background-color: #f4f8fb;
+            overflow-y: hidden;
         }
 
         h1 {
@@ -21,21 +22,30 @@
             color: rgb(6, 95, 95);
         }
 
+        .wrapper {
+            width:100%;
+            max-width: 1150px;
+            margin: auto;
+        }
+
         #header{
-            max-width: 1100px; 
+            width: 100%; 
             margin-top: 30px; 
+        }
+
+        #queryControlsWrapper {
+            overflow: scroll;
         }
 
         #queryControls{
             padding: 20px;
-            max-width: 1100px;
-            overflow: scroll;
+            width: 1100px;
             white-space: nowrap;
         }
 
         #results{
             padding: 20px;
-            max-width: 1100px;
+            width: 90%;
         }
 
         .control {
@@ -69,79 +79,81 @@
 </head>
 
 <body>
-    <div style="width:1120px;margin: auto;">
+    <div class="wrapper">
         <div id="header" style="text-align: center;">
             <img src="audio-commons-logo-horizontal.png" style="max-width:500px;width: 90%;"/>
             <h1>Audio Commons Audio Extractor Demonstrator</h1>
-            <p style="padding-left:100px;padding-right:100px;">This website allows you to search in <b>Freesound</b> and filter using some of the Audio Commons descriptors for <b>music samples</b> developed during the Audio Commons project.
+            <p style="padding-left:5%;padding-right:5%;">This website allows you to search in <b>Freesound</b> and filter using some of the Audio Commons descriptors for <b>music samples</b> developed during the Audio Commons project.
                 <br><br>Use the form interface below to set the filters for your query. Filters can be enabled and disabled by clicking on them.
                 Note the circular <i>knobs</i> in the <b>tonality</b>, <b>tempo</b> and <b>pitch</b> filters. Use them to set the minimum confidence of the annotations for the returned results. The higher you set the knob (turn right), the more accurate results you should obtain.
                 <br><br>The Audio Commons Audio Extractor is available in this <a href="https://github.com/AudioCommons/ac-audio-extractor" target="_blank">source code repository</a>.
             </p>
         </div>
-        <div id="queryControls">
-            <div class="controlsRow" style="width:1092px;">
-                <div id="query" class="control" style="height:52px;">
-                    Query<br>
-                    <input id="queryStringInput" type="text" placeholder="Query terms..." class="queryTerms"/>
+        <div id="queryControlsWrapper">
+            <div id="queryControls">
+                <div class="controlsRow" style="width:100%;">
+                    <div id="query" class="control" style="height:52px;">
+                        Query<br>
+                        <input id="queryStringInput" type="text" placeholder="Query terms..." class="queryTerms"/>
+                    </div>
+                </div>
+                <div class="controlsRow" style="width:100%;">
+                    <div class="controlsColumn" style="width:12%;">
+                        <div id="singleEventDivControl" class="control disabled" style="height:52px;" onclick="toggleFilter(event, 'singleEventDivControl');">
+                            Single event
+                            <div id="singleEventControl" style="margin-top:5px;"></div>
+                        </div>
+                        <div id="loopDivControl" class="control disabled" style="height:52px;" onclick="toggleFilter(event, 'loopDivControl');">
+                            Loop
+                            <div id="loopControl" style="margin-top: 5px;"></div>
+                        </div>
+                    </div>
+                    <div class="controlsColumn" style="width:26%;">
+                        <div id="tonalityDivControl" class="control disabled" style="height:52px;" onclick="toggleFilter(event, 'tonalityDivControl');">
+                            Tonality<br>
+                            <div id="tonalityControlA" style="display: inline-block; margin-top: 5px;"></div>
+                            <div id="tonalityControlB" style="display: inline-block;"></div>
+                            <div id="tonalityConfidenceControl" style="display: inline-block; vertical-align: bottom;"></div>
+                        </div>
+                        <div id="tempoDivControl" class="control disabled" style="height:52px;" onclick="toggleFilter(event, 'tempoDivControl');">
+                            Tempo<br>
+                            <div id="tempoControl" style="display: inline-block; margin-top: 5px;"></div>
+                            <div id="tempoConfidenceControl" style="display: inline-block; vertical-align: bottom;"></div>
+                        </div>
+                    </div>
+                    <div class="controlsColumn" style="width:61.3%;">
+                        <div id="pitchDivControl" class="control disabled" style="height:150px;" onclick="toggleFilter(event, 'pitchDivControl');">
+                            Pitch<br>
+                            <div id="pitchControl" style="display: inline-block;"></div>
+                            <div id="pitchConfidenceControl" style="display: inline-block;"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="controlsRow" style="width:100%;">
+                    <div class="controlsColumn">
+                        <div id="brightnessDivControl"  class="control disabled" onclick="toggleFilter(event, 'brightnessDivControl');">
+                            Brightness
+                            <div id="brightnessControl" style=" margin-top: 5px;"></div>
+                        </div>
+                    </div>
+                    <div class="controlsColumn">
+                        <div id="hardnessDivControl" class="control disabled" onclick="toggleFilter(event, 'hardnessDivControl');">
+                            Hardness
+                            <div id="hardnessControl" style=" margin-top: 5px;"></div>
+                        </div>
+                    </div>
+                    <div class="controlsColumn">
+                        <div id="depthDivControl" class="control disabled" onclick="toggleFilter(event, 'depthDivControl');">
+                            Depth
+                            <div id="depthControl" style=" margin-top: 5px;"></div>
+                        </div>
+                    </div>
                 </div>
             </div>
-            <div class="controlsRow" style="width:1050px;">
-                <div class="controlsColumn" style="width:130px;">
-                    <div id="singleEventDivControl" class="control disabled" style="height:52px;" onclick="toggleFilter(event, 'singleEventDivControl');">
-                        Single event
-                        <div id="singleEventControl" style="margin-top:5px;"></div>
-                    </div>
-                    <div id="loopDivControl" class="control disabled" style="height:52px;" onclick="toggleFilter(event, 'loopDivControl');">
-                        Loop
-                        <div id="loopControl" style="margin-top: 5px;"></div>
-                    </div>
-                </div>
-                <div class="controlsColumn" style="width:280px;">
-                    <div id="tonalityDivControl" class="control disabled" style="height:52px;" onclick="toggleFilter(event, 'tonalityDivControl');">
-                        Tonality<br>
-                        <div id="tonalityControlA" style="display: inline-block; margin-top: 5px;"></div>
-                        <div id="tonalityControlB" style="display: inline-block;"></div>
-                        <div id="tonalityConfidenceControl" style="display: inline-block; vertical-align: bottom;"></div>
-                    </div>
-                    <div id="tempoDivControl" class="control disabled" style="height:52px;" onclick="toggleFilter(event, 'tempoDivControl');">
-                        Tempo<br>
-                        <div id="tempoControl" style="display: inline-block; margin-top: 5px;"></div>
-                        <div id="tempoConfidenceControl" style="display: inline-block; vertical-align: bottom;"></div>
-                    </div>
-                </div>
-                <div class="controlsColumn" style="width:675px;">
-                    <div id="pitchDivControl" class="control disabled" style="height:150px;" onclick="toggleFilter(event, 'pitchDivControl');">
-                        Pitch<br>
-                        <div id="pitchControl" style="display: inline-block;"></div>
-                        <div id="pitchConfidenceControl" style="display: inline-block;"></div>
-                    </div>
-                </div>
-            </div>
-            <div class="controlsRow" style="width:1050px;">
-                <div class="controlsColumn">
-                    <div id="brightnessDivControl"  class="control disabled" onclick="toggleFilter(event, 'brightnessDivControl');">
-                        Brightness
-                        <div id="brightnessControl" style=" margin-top: 5px;"></div>
-                    </div>
-                </div>
-                <div class="controlsColumn">
-                    <div id="hardnessDivControl" class="control disabled" onclick="toggleFilter(event, 'hardnessDivControl');">
-                        Hardness
-                        <div id="hardnessControl" style=" margin-top: 5px;"></div>
-                    </div>
-                </div>
-                <div class="controlsColumn">
-                    <div id="depthDivControl" class="control disabled" onclick="toggleFilter(event, 'depthDivControl');">
-                        Depth
-                        <div id="depthControl" style=" margin-top: 5px;"></div>
-                    </div>
-                </div>
-            </div>
-            <div class="controlsRow">
-                <div id="searchButton" style="display:inline-block;"></div>
-                <img id="loading" src="spinner.gif" height="50px" width="50px" style="display:none;vertical-align: top;"/>
-            </div>
+        </div>
+        <div class="controlsRow" style="padding-left:20px;">
+            <div id="searchButton" style="display:inline-block;"></div>
+            <img id="loading" src="spinner.gif" height="50px" width="50px" style="display:none;vertical-align: top;" />
         </div>
 
         <div id="results"></div>
@@ -197,7 +209,7 @@
 
         var selectedPianoNote = 64;
         var pitchControlObject = new Nexus.Piano('#pitchControl',{
-            'size': [600,125],
+            'size': [575,125],
             'mode': 'button',
             'lowNote': 30,
             'highNote': 100
@@ -232,7 +244,7 @@
         })
 
         var brightnessControlObject = new Nexus.Slider('#brightnessControl', {
-            'size': [322, 30],
+            'size': [325, 30],
             'min': 0,
             'max': 100,
             'step': 1,
@@ -240,7 +252,7 @@
         })
 
         var hardnessControlObject = new Nexus.Slider('#hardnessControl', {
-            'size': [322, 30],
+            'size': [325, 30],
             'min': 40,  // There don't seem to be sounds with hardness below this value. We should plot histograms for adjusting sliders better.  
             'max': 100,
             'step': 1,
