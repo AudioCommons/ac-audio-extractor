@@ -1,6 +1,9 @@
-<html>
-
+<!DOCTYPE html>
+<html lang="en">
 <head>
+    <title>Audio Commons Audio Extractor Web Demonstrator</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <script src="NexusUI.js"></script>
     <script src="freesound.js"></script>
     <link href='https://fonts.googleapis.com/css?family=Rajdhani:400,700' rel='stylesheet' type='text/css'>
@@ -136,7 +139,8 @@
                 </div>
             </div>
             <div class="controlsRow">
-                <div id="searchButton"></div>
+                <div id="searchButton" style="display:inline-block;"></div>
+                <img id="loading" src="spinner.gif" height="50px" width="50px" style="display:none;vertical-align: top;"/>
             </div>
         </div>
 
@@ -324,6 +328,8 @@
         }
 
         function doSearch(){
+            document.getElementById("loading").style.display = 'inline-block';
+
             var filterString = buildFilterString();
             var query = document.getElementById('queryStringInput').value;
             var fields = 'id,name,username,license,ac_analysis,url';
@@ -338,6 +344,8 @@
 
             freesound.textSearch(query, params,
             function(sounds){
+                document.getElementById("loading").style.display = 'none';
+
                 if (sounds.count == 0) {
                     document.getElementById("results").innerHTML = "Your query returned 0 results...";
                     return;
@@ -358,6 +366,7 @@
                
                 document.getElementById("results").innerHTML = htmlResults;
             },function(){ 
+                document.getElementById("loading").style.display = 'none';
                 document.getElementById("results").innerHTML = "Error while searching Freesound...";
             }
         );
