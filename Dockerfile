@@ -79,12 +79,16 @@ RUN apt-get update \
     && rm -rf /var/lib/apt/lists/* \
     && cd / && rm -rf /essentia/essentia
 
+
+# Install ffmpeg (NOTE: this could be probably optimized using libav from above)
+RUN apt-get update && apt-get install -y ffmpeg
+
 # Extra python dependencies
 RUN pip install SoundFile==0.10.2 librosa==0.6.1 scipy==1.1.0 ffmpeg-python==0.1.17
 RUN pip install rdflib==4.2.2 rdflib-jsonld==0.4.0 PyLD==1.0.3
 
-# Install version 0.3 (commit 5b68d00feeee1a15ef73b59e9fcbe97eab6a1944) of timbral models
-RUN git clone https://github.com/AudioCommons/timbral_models.git && cd timbral_models && git checkout 5b68d00feeee1a15ef73b59e9fcbe97eab6a1944 && python setup.py install  # Using commit with division fixes for Python3 (this is temporal, should be set to master once new version is out)
+# Install version 0.4 (commit be443e54f5b8865d7a055e438545f139899d17bc) of timbral models
+RUN git clone https://github.com/AudioCommons/timbral_models.git && cd timbral_models && git checkout be443e54f5b8865d7a055e438545f139899d17bc && python setup.py install  # Using commit corresponding to v0.5 (D5.8)
 
 # Add high-level models and music extractor configuration
 RUN mkdir -p models

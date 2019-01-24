@@ -9,16 +9,18 @@ import logging
 import pyld
 import rdflib
 import essentia
-import uuid
-import ffmpeg
 essentia.log.infoActive = False
 essentia.log.warningActive = False
+import uuid
+import ffmpeg
+import warnings
+warnings.filterwarnings("ignore")
 from essentia.standard import MusicExtractor, FreesoundExtractor, MonoLoader, MonoWriter
 from rdflib import Graph, URIRef, BNode, Literal, Namespace, plugin
 from rdflib.serializer import Serializer
 from rdflib.namespace import RDF
 from argparse import ArgumentParser
-from timbral_models import timbral_brightness, timbral_depth, timbral_hardness,  timbral_roughness, timbral_booming, timbral_warmth, timbral_sharpness
+import timbral_models
 
 MORE_THAN_2_CHANNELS_EXCEPTION_MATCH_TEXT = 'Audio file has more than 2 channels'
 METADATA_READER_EXCEPTION_MATCH_TEXT = 'pcmMetadata cannot read files which are neither "wav" nor "aiff"'
@@ -227,22 +229,13 @@ def ac_pitch_description(audiofile, fs_pool, ac_descriptors):
 def ac_timbral_models(audiofile, ac_descriptors):
     logger.debug('{0}: computing timbral models'.format(audiofile))
 
-    converted_filename = convert_to_wav(audiofile)  # Convert file to PCM for running timbral models
-    for name, function in [
-        ('brightness', timbral_brightness), 
-        ('depth', timbral_depth), 
-        ('hardness', timbral_hardness), 
-        ('roughness', timbral_roughness),
-        ('booming', timbral_booming), 
-        ('warmth', timbral_warmth), 
-        ('sharpness', timbral_sharpness)
-    ]:
-        try:
-            value = function(converted_filename)
-        except Exception as e:
-            logger.debug('{0}: analysis failed ({1}, "{2}")'.format(audiofile, function, e))
-            value = 0
-        ac_descriptors[name] = value
+    converted_filename = convert_to_wav(audiofile)
+    try:
+        timbre = timbral_models.timbral_extractor(audiofile, clip_output=True, verbose=False)
+        timbre['reverb'] = timbre['reverb'] == 1
+        ac_descriptors.update(timbre)
+    except Exception as e:
+        logger.debug('{0}: timbral models computation failed ("{2}")'.format(audiofile, e))
 
 
 def ac_highlevel_music_description(audiofile, ac_descriptors):
@@ -353,10 +346,11 @@ def analyze(audiofile, outfile, compute_timbral_models=False, compute_descriptor
     if compute_descriptors_music_samples:
         ac_pitch_description(audiofile, fs_pool, ac_descriptors)
     if compute_timbral_models:
-        if is_single_event(audiofile):
+        MAX_SOUND_DURATION_FOR_TIMBRAL_MODELS = 30  # Avoid computing timbral models for sound longer than 30 seconds to avoid too many slow computations
+        if ac_descriptors['duration'] < MAX_SOUND_DURATION_FOR_TIMBRAL_MODELS:
             ac_timbral_models(audiofile, ac_descriptors)
         else:
-            logger.debug('{0}: skipping computation of timbral models as audio is not single event'.format(audiofile))
+            logger.debug('{0}: skipping computation of timbral models as audio is longer than {1} seconds'.format(audiofile, MAX_SOUND_DURATION_FOR_TIMBRAL_MODELS))
 
     if compute_descriptors_music_pieces:
         ac_highlevel_music_description(audiofile, ac_descriptors)
