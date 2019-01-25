@@ -6,6 +6,11 @@ To facilitate its usage, the tool has been *dockerized* and should run efforless
 
 Checkout the [web demonstrator](http://www.audiocommons.org/ac-audio-extractor/web_demonstrator/) that shows the power of some of the music properties extracted with this tool.
 
+## License
+
+The Audio Commons Audio Extractor is licenses under AGPLv3 expect for the included [timbral models](https://github.com/AudioCommons/timbral_models) code which is licensed under Apache 2. Both license files are included in this source code repository.
+
+
 ## Running the audio extractor
 
 The Audio Commons Audio Extractor is expected to be used as a command line tool and run from a terminal. Assuming you have Docker installed, you can easily analyze an audio file using the following command (the audio file must be located in the same folder from where you run the command, be aware that the first time you run this command it will take a lot of time as Docker will need to download the actual Audio Commons Audio Extractor tool first):
