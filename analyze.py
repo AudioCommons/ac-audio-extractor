@@ -48,14 +48,13 @@ ac_mapping = {
 }
 
 def convert_to_wav(audiofile, samplerate=44100):
+    # Convert to mono WAV using ffmpeg
+    output_filename = '/tmp/{0}-converted.wav'.format(hashlib.md5(audiofile.encode('utf-8')).hexdigest())
+    if not os.path.exists(output_filename):
         logger.debug('{0}: converting to WAV'.format(audiofile))
-
-        # Convert to mono WAV using ffmpeg
-        output_filename = '/tmp/{0}-converted.wav'.format(hashlib.md5(audiofile.encode('utf-8')).hexdigest())
-        if not os.path.exists(output_filename):
-            ffmpeg.input(audiofile).output(output_filename, ac=1).run(quiet=True, overwrite_output=True)
-        
-        return output_filename
+        ffmpeg.input(audiofile).output(output_filename, ac=1).run(quiet=True, overwrite_output=True)            
+    
+    return output_filename
 
 def run_freesound_extractor(audiofile):
     logger.debug('{0}: running Essentia\'s FreesoundExtractor'.format(audiofile))
@@ -231,11 +230,11 @@ def ac_timbral_models(audiofile, ac_descriptors):
 
     converted_filename = convert_to_wav(audiofile)
     try:
-        timbre = timbral_models.timbral_extractor(audiofile, clip_output=True, verbose=False)
+        timbre = timbral_models.timbral_extractor(converted_filename, clip_output=True, verbose=False)
         timbre['reverb'] = timbre['reverb'] == 1
         ac_descriptors.update(timbre)
     except Exception as e:
-        logger.debug('{0}: timbral models computation failed ("{2}")'.format(audiofile, e))
+        logger.debug('{0}: timbral models computation failed ("{1}")'.format(audiofile, e))
 
 
 def ac_highlevel_music_description(audiofile, ac_descriptors):
