@@ -148,6 +148,36 @@
                             <div id="depthControl" style=" margin-top: 5px;"></div>
                         </div>
                     </div>
+                    <div class="controlsColumn">
+                        <div id="roughnessDivControl"  class="control disabled" onclick="toggleFilter(event, 'roughnessDivControl');">
+                            Roughness
+                            <div id="roughnessControl" style=" margin-top: 5px;"></div>
+                        </div>
+                    </div>
+                    <div class="controlsColumn">
+                        <div id="boominessDivControl" class="control disabled" onclick="toggleFilter(event, 'boominessDivControl');">
+                            Boominess
+                            <div id="boominessControl" style=" margin-top: 5px;"></div>
+                        </div>
+                    </div>
+                    <div class="controlsColumn">
+                        <div id="warmthDivControl" class="control disabled" onclick="toggleFilter(event, 'warmthDivControl');">
+                            Warmth
+                            <div id="warmthControl" style=" margin-top: 5px;"></div>
+                        </div>
+                    </div>
+                    <div class="controlsColumn">
+                        <div id="sharpnessDivControl" class="control disabled" onclick="toggleFilter(event, 'sharpnessDivControl');">
+                            Sharpness
+                            <div id="sharpnessControl" style=" margin-top: 5px;"></div>
+                        </div>
+                    </div>
+                    <div class="controlsColumn">
+                        <div id="reverbDivControl" class="control disabled" style="height:52px;" onclick="toggleFilter(event, 'reverbDivControl');">
+                            Reverb
+                            <div id="reverbControl" style="margin-top: 5px;"></div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -244,7 +274,7 @@
         })
 
         var brightnessControlObject = new Nexus.Slider('#brightnessControl', {
-            'size': [325, 30],
+            'size': [100, 30],
             'min': 0,
             'max': 100,
             'step': 1,
@@ -252,19 +282,56 @@
         })
 
         var hardnessControlObject = new Nexus.Slider('#hardnessControl', {
-            'size': [325, 30],
+            'size': [100, 30],
             'min': 40,  // There don't seem to be sounds with hardness below this value. We should plot histograms for adjusting sliders better.  
+            'max': 100,
+            'step': 1,
+            'value': 70,
+        })
+
+        var depthControlObject = new Nexus.Slider('#depthControl', {
+            'size': [100, 30],
+            'min': 0,
             'max': 100,
             'step': 1,
             'value': 50,
         })
 
-        var depthControlObject = new Nexus.Slider('#depthControl', {
-            'size': [322, 30],
+        var roughnessControlObject = new Nexus.Slider('#roughnessControl', {
+            'size': [100, 30],
             'min': 0,
             'max': 100,
             'step': 1,
             'value': 50,
+        })
+
+        var boominessControlObject = new Nexus.Slider('#boominessControl', {
+            'size': [100, 30],
+            'min': 0,
+            'max': 100,
+            'step': 1,
+            'value': 50,
+        })
+
+        var warmthControlObject = new Nexus.Slider('#warmthControl', {
+            'size': [100, 30],
+            'min': 0,
+            'max': 100,
+            'step': 1,
+            'value': 50,
+        })
+
+        var sharpnessControlObject = new Nexus.Slider('#sharpnessControl', {
+            'size': [100, 30],
+            'min': 0,
+            'max': 100,
+            'step': 1,
+            'value': 50,
+        })
+
+        var reverbControlObject = new Nexus.Toggle('#reverbControl', {
+            'size': [50, 30],
+            'state': false
         })
 
         var searchButton = new Nexus.TextButton('#searchButton',{
@@ -330,6 +397,26 @@
 
             if (!document.getElementById("hardnessDivControl").classList.contains('disabled')) {
                 filterTerms.push('ac_hardness:[' + (hardnessControlObject.value - TIMBRAL_DESCRIPTORS_FILTER_WIDTH / 2) + '+TO+' + (hardnessControlObject.value + TIMBRAL_DESCRIPTORS_FILTER_WIDTH / 2) + ']');
+            }
+
+            if (!document.getElementById("roughnessDivControl").classList.contains('disabled')) {
+                filterTerms.push('ac_roughness:[' + (roughnessControlObject.value - TIMBRAL_DESCRIPTORS_FILTER_WIDTH / 2) + '+TO+' + (roughnessControlObject.value + TIMBRAL_DESCRIPTORS_FILTER_WIDTH / 2) + ']');
+            }
+
+            if (!document.getElementById("boominessDivControl").classList.contains('disabled')) {
+                filterTerms.push('ac_boominess:[' + (boominessControlObject.value - TIMBRAL_DESCRIPTORS_FILTER_WIDTH / 2) + '+TO+' + (boominessControlObject.value + TIMBRAL_DESCRIPTORS_FILTER_WIDTH / 2) + ']');
+            }
+
+            if (!document.getElementById("warmthDivControl").classList.contains('disabled')) {
+                filterTerms.push('ac_warmth:[' + (warmthControlObject.value - TIMBRAL_DESCRIPTORS_FILTER_WIDTH / 2) + '+TO+' + (warmthControlObject.value + TIMBRAL_DESCRIPTORS_FILTER_WIDTH / 2) + ']');
+            }
+
+            if (!document.getElementById("sharpnessDivControl").classList.contains('disabled')) {
+                filterTerms.push('ac_sharpness:[' + (sharpnessControlObject.value - TIMBRAL_DESCRIPTORS_FILTER_WIDTH / 10) + '+TO+' + (sharpnessControlObject.value + TIMBRAL_DESCRIPTORS_FILTER_WIDTH / 10) + ']');
+            }
+
+            if (!document.getElementById("reverbDivControl").classList.contains('disabled')){
+                filterTerms.push('ac_reverb:' + reverbControlObject.state);
             }
             
             return filterTerms.join(' ');
