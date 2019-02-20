@@ -8,7 +8,7 @@ Checkout the [web demonstrator](http://www.audiocommons.org/ac-audio-extractor/w
 
 ## License
 
-The Audio Commons Audio Extractor is licenses under AGPLv3 expect for the included [timbral models](https://github.com/AudioCommons/timbral_models) code which is licensed under Apache 2. Both license files are included in this source code repository.
+The Audio Commons Audio Extractor is licensed under AGPLv3 except for the included [timbral models](https://github.com/AudioCommons/timbral_models) code which is licensed under Apache 2. Both license files are included in this source code repository.
 
 
 ## Running the audio extractor
