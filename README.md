@@ -252,7 +252,7 @@ As described in [deliverable D5.2](https://www.audiocommons.org/assets/files/AC-
 - ```hardness```: hardness of the analyzed audio in a scale from [0-100]. A *hard* sound is one that conveys the sense of having been made (i) by something solid, firm or rigid; or (ii) with a great deal of force.
 - ```depth```: depth of the analyzed audio in a scale from [0-100]. A *deep* sound is one that conveys the sense of having been made far down below the surface of its source.
 - ```roughness```: roughness of the analyzed audio in a scale from [0-100]. A *rough* sound is one that has an uneven or irregular sonic texture.
-- ```boominess```: bominess of the analyzedn sound in a scale from [0-100].
-- ```warmth```: warmth of the analyzedn sound in a scale from [0-100].
-- ```sharpness```: sharpness of the analyzedn sound in a scale from [0-100].
+- ```boominess```: bominess of the analyzedn sound in a scale from [0-100]. A *boomy* sound is one that conveys a sense of loudness, depth and resonance.
+- ```warmth```: warmth of the analyzedn sound in a scale from [0-100]. A *warm* sound is one that promotes a sensation analogous to that caused by a physical increase in temperature.  
+- ```sharpness```: sharpness of the analyzedn sound in a scale from [0-100]. A *sharp* sound is one that suggests it might cut if it were to take on physical form.
 - ```reverb```: will return `true` if the signal has reverb or `false` otherwise.
