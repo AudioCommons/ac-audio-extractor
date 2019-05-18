@@ -211,7 +211,7 @@ def ac_pitch_description(audiofile, fs_pool, ac_descriptors):
         # Use convention MIDI value 69 = 440.0 Hz = A4
         note = midi_note % 12
         octave = midi_note / 12
-        return '%s%i' % (['C', 'C#', 'D', 'D#', 'E', 'E#', 'F', 'F#', 'G', 'A', 'A#', 'B'][note], octave - 1)
+        return '%s%i' % (['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'][note], octave - 1)
 
     def frequency_to_midi_note(frequency):
         return int(round(69 + (12 * math.log(frequency / 440.0)) / math.log(2)))
