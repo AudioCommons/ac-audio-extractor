@@ -375,8 +375,8 @@ if __name__ == '__main__':
     parser.add_argument('-t', '--timbral-models', help='include descriptors computed from timbral models', action='store_const', const=True, default=False)
     parser.add_argument('-m', '--music-pieces', help='include descriptors designed for music pieces', action='store_const', const=True, default=False)
     parser.add_argument('-s', '--music-samples', help='include descriptors designed for music samples', action='store_const', const=True, default=False)
-    parser.add_argument('-i', '--input', help='input audio file or input folder containing the audio files to analyze', required=True)
-    parser.add_argument('-o', '--output', help='output analysis file or output folder where the analysis files will be saved', required=True)
+    parser.add_argument('-i', '--input', help='input audio file or input directory containing the audio files to analyze', required=True)
+    parser.add_argument('-o', '--output', help='output analysis file or output directory where the analysis files will be saved', required=True)
     parser.add_argument('-f', '--format', help='format of the output analysis file ("json" or "jsonld", defaults to "jsonld")', default="jsonld")
     parser.add_argument('-u', '--uri', help='URI for the analyzed sound (only used if "jsonld" format is chosen)', default=None)
     

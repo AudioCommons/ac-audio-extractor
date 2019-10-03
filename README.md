@@ -25,6 +25,12 @@ The example above mounts the current directory ``pwd`` in the virtual `tmp` dire
 docker run -it --rm -v /local/path/to/your/audio/file.wav:/audio.wav -v /local/path/to/output_directory/:/outdir mtgupf/ac-audio-extractor:v3 -i /audio.wav -o /outdir/analysis.json  -st
 ```
 
+You can also run the analyze on several files contained in a folder by entering directories as input and output arguments to the extractor. For instance, you can use the following command:
+
+```
+docker run -it --rm -v /local/path/to/your/input_directory/:/audio -v /local/path/to/output_directory/:/outdir mtgupf/ac-audio-extractor:v3 -i /audio/ -o /outdir/  -st
+```
+
 You can use the `--help` flag with the Audio Commons Audio Extractor so see a complete list of all available options:
 
 ```
@@ -44,9 +50,9 @@ optional arguments:
   -m, --music-pieces    include descriptors designed for music pieces
   -s, --music-samples   include descriptors designed for music samples
   -i INPUT, --input INPUT
-                        input audio file
+                        input audio file or input directory containing the audio files to analyze
   -o OUTPUT, --output OUTPUT
-                        output analysis file
+                        output analysis file or output directory where the analysis files will be saved
   -f FORMAT, --format FORMAT
                         format of the output analysis file ("json" or
                         "jsonld", defaults to "jsonld")
