@@ -25,7 +25,7 @@ The example above mounts the current directory ``pwd`` in the virtual `tmp` dire
 docker run -it --rm -v /local/path/to/your/audio/file.wav:/audio.wav -v /local/path/to/output_directory/:/outdir mtgupf/ac-audio-extractor:v3 -i /audio.wav -o /outdir/analysis.json  -st
 ```
 
-You can also run the analyze on several files contained in a folder by entering directories as input and output arguments to the extractor. For instance, you can use the following command:
+You can also run the analysis on several files contained in a directory by entering directories as input and output arguments to the extractor. For instance, you can use the following command:
 
 ```
 docker run -it --rm -v /local/path/to/your/input_directory/:/audio -v /local/path/to/output_directory/:/outdir mtgupf/ac-audio-extractor:v3 -i /audio/ -o /outdir/  -st
