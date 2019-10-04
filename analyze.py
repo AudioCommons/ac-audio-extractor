@@ -20,7 +20,7 @@ from essentia.standard import MusicExtractor, FreesoundExtractor, MonoLoader, Mo
 from rdflib import Graph, URIRef, BNode, Literal, Namespace, plugin
 from rdflib.serializer import Serializer
 from rdflib.namespace import RDF
-from argparse import ArgumentParser
+from argparse import ArgumentParser, ArgumentTypeError
 import timbral_models
 
 MORE_THAN_2_CHANNELS_EXCEPTION_MATCH_TEXT = 'Audio file has more than 2 channels'
@@ -396,4 +396,4 @@ if __name__ == '__main__':
         analyze(args.input, args.output, args.timbral_models, args.music_pieces, args.music_samples, args.format, args.uri)
 
     else:
-        Exception('Make sure input and output arguments are both files or folders')
+        raise ArgumentTypeError('Make sure input and output arguments are both files or folders')
