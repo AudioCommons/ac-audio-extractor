@@ -383,15 +383,17 @@ if __name__ == '__main__':
     args = parser.parse_args()
     logging.basicConfig(format='%(asctime)s %(levelname)s:%(message)s', level=logging.INFO if not args.verbose else logging.DEBUG)
 
-    # check if the input is a file or a folder
-    if os.path.isfile(args.input):
-        analyze(args.input, args.output, args.timbral_models, args.music_pieces, args.music_samples, args.format, args.uri)
-    # ensure that the output argument is a folder
-    elif not os.path.isfile(args.output):
+    # check if input and output arguments point to directories
+    if os.path.isdir(args.input) and os.path.isdir(args.output):
         folder = args.input
         input_files = [x for x in Path(folder).iterdir() if x.is_file()]
         for input_file in input_files:
             output_file = os.path.join(args.output, '{}_analysis.json'.format(input_file.stem))
             analyze(str(input_file), output_file, args.timbral_models, args.music_pieces, args.music_samples, args.format, args.uri)
+
+    # check if input argument points to a file
+    elif os.path.isfile(args.input):
+        analyze(args.input, args.output, args.timbral_models, args.music_pieces, args.music_samples, args.format, args.uri)
+
     else:
         Exception('Make sure input and output arguments are both files or folders')
