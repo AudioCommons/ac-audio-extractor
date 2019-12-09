@@ -4,6 +4,7 @@ import json
 import math
 import hashlib
 import subprocess
+from pathlib import Path
 import numpy as np
 import logging
 import pyld
@@ -19,7 +20,7 @@ from essentia.standard import MusicExtractor, FreesoundExtractor, MonoLoader, Mo
 from rdflib import Graph, URIRef, BNode, Literal, Namespace, plugin
 from rdflib.serializer import Serializer
 from rdflib.namespace import RDF
-from argparse import ArgumentParser
+from argparse import ArgumentParser, ArgumentTypeError
 import timbral_models
 
 MORE_THAN_2_CHANNELS_EXCEPTION_MATCH_TEXT = 'Audio file has more than 2 channels'
@@ -374,13 +375,25 @@ if __name__ == '__main__':
     parser.add_argument('-t', '--timbral-models', help='include descriptors computed from timbral models', action='store_const', const=True, default=False)
     parser.add_argument('-m', '--music-pieces', help='include descriptors designed for music pieces', action='store_const', const=True, default=False)
     parser.add_argument('-s', '--music-samples', help='include descriptors designed for music samples', action='store_const', const=True, default=False)
-    parser.add_argument('-i', '--input', help='input audio file', required=True)
-    parser.add_argument('-o', '--output', help='output analysis file', required=True)
+    parser.add_argument('-i', '--input', help='input audio file or input directory containing the audio files to analyze', required=True)
+    parser.add_argument('-o', '--output', help='output analysis file or output directory where the analysis files will be saved', required=True)
     parser.add_argument('-f', '--format', help='format of the output analysis file ("json" or "jsonld", defaults to "jsonld")', default="jsonld")
     parser.add_argument('-u', '--uri', help='URI for the analyzed sound (only used if "jsonld" format is chosen)', default=None)
     
     args = parser.parse_args()
     logging.basicConfig(format='%(asctime)s %(levelname)s:%(message)s', level=logging.INFO if not args.verbose else logging.DEBUG)
 
-    analyze(args.input, args.output, args.timbral_models, args.music_pieces, args.music_samples, args.format, args.uri)
-    
+    # check if input and output arguments point to directories
+    if os.path.isdir(args.input) and os.path.isdir(args.output):
+        folder = args.input
+        input_files = [x for x in Path(folder).iterdir() if x.is_file()]
+        for input_file in input_files:
+            output_file = os.path.join(args.output, '{}_analysis.json'.format(input_file.stem))
+            analyze(str(input_file), output_file, args.timbral_models, args.music_pieces, args.music_samples, args.format, args.uri)
+
+    # check if input argument points to a file
+    elif os.path.isfile(args.input):
+        analyze(args.input, args.output, args.timbral_models, args.music_pieces, args.music_samples, args.format, args.uri)
+
+    else:
+        raise ArgumentTypeError('Make sure input and output arguments are both files or folders')

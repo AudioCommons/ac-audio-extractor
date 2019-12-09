@@ -1,4 +1,4 @@
-FROM python:3
+FROM python:3.6.8-stretch
 
 # Common requirements
 RUN apt-get update \
