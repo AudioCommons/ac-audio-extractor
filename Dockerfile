@@ -37,6 +37,7 @@ RUN apt-get update \
         python-dev \
     && git clone https://github.com/MTG/gaia /tmp/gaia \
     && cd /tmp/gaia \
+    && git checkout v2.4.5 \
     && python2 ./waf configure \
     && python2 ./waf \
     && python2 ./waf install \
