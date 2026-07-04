@@ -176,23 +176,16 @@ def ac_general_description(audiofile, fs_pool, ac_descriptors):
             value = fs_pool[essenia_name]
             ac_descriptors[ac_name] = value
     ac_descriptors["filesize"] = os.stat(audiofile).st_size
-    ac_descriptors["single_event"] = is_single_event(audiofile)
+    ac_descriptors["single_event"] = False #is_single_event(audiofile)
 
 
 def ac_rhythm_description(audiofile, fs_pool, ac_descriptors):
     logger.debug('{0}: adding rhythm descriptors'.format(audiofile))
     
-    IS_LOOP_CONFIDENCE_THRESHOLD = 0.95
-    is_loop = fs_pool['rhythm.bpm_loop_confidence.mean'] > IS_LOOP_CONFIDENCE_THRESHOLD
-    ac_descriptors["loop"] = is_loop
-
-    if is_loop:
-        ac_descriptors["tempo"] = int(round(fs_pool['rhythm.bpm_loop']))
-        ac_descriptors["tempo_confidence"] = fs_pool['rhythm.bpm_loop_confidence.mean']
-    else:
-        ac_descriptors["tempo"] = int(round(fs_pool['rhythm.bpm']))
-        tempo_confidence = fs_pool['rhythm.bpm_confidence'] / 5.0  # Normalize BPM confidence value to be in range [0, 1]
-        ac_descriptors["tempo_confidence"] = np.clip(tempo_confidence, 0.0, 1.0)
+    ac_descriptors["loop"] = False
+    ac_descriptors["tempo"] = int(round(fs_pool['rhythm.bpm']))
+    tempo_confidence = fs_pool['rhythm.bpm_confidence'] / 5.0
+    ac_descriptors["tempo_confidence"] = np.clip(tempo_confidence, 0.0, 1.0)
 
     return ac_descriptors
 
@@ -239,10 +232,11 @@ def ac_timbral_models(audiofile, ac_descriptors):
 
 
 def ac_highlevel_music_description(audiofile, ac_descriptors):
-    logger.debug('{0}: running Essentia\'s MusicExtractor'.format(audiofile))
-    me_pool, _ = MusicExtractor(profile='music_extractor_profile.yaml')(audiofile)
-    ac_descriptors["genre"] = me_pool['highlevel.genre_test.value']
-    ac_descriptors["mood"] = me_pool['highlevel.mood_test.value']
+    #logger.debug('{0}: running Essentia\'s MusicExtractor'.format(audiofile))
+    #me_pool, _ = MusicExtractor(profile='music_extractor_profile.yaml')(audiofile)
+    #ac_descriptors["genre"] = me_pool['highlevel.genre_test.value']
+    #ac_descriptors["mood"] = me_pool['highlevel.mood_test.value']
+    pass
 
 
 def build_graph(ac_descriptors, uri=None):
@@ -354,17 +348,26 @@ def analyze(audiofile, outfile, compute_timbral_models=False, compute_descriptor
 
     if compute_descriptors_music_pieces:
         ac_highlevel_music_description(audiofile, ac_descriptors)
-    
-    if out_format == 'jsonld':
-        # Convert output to JSON-LD
-        graph = build_graph(ac_descriptors, uri=uri)
-        output = render_jsonld_output(graph)
+
+    if out_format != "txt":
+        if out_format == 'jsonld':
+            # Convert output to JSON-LD
+            graph = build_graph(ac_descriptors, uri=uri)
+            output = render_jsonld_output(graph)
+        else:
+            # By default (or in case of unknown format, use JSON)
+            output = ac_descriptors
+        json.dump(output, open(outfile, 'w'), indent=4)
     else:
-        # By default (or in case of unknown format, use JSON)
-        output = ac_descriptors
+        outfile = outfile + '.txt'
+        file_contents = ''
+        for key, value in ac_descriptors.items():
+            file_contents += f'{key}={str(value)}\n'
+        with open(outfile, 'w') as fid:
+            fid.write(file_contents)
+
 
     logger.info('{0}: analysis finished'.format(audiofile))
-    json.dump(output, open(outfile, 'w'), indent=4)
 
     
 if __name__ == '__main__':
