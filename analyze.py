@@ -228,7 +228,7 @@ def ac_timbral_models(audiofile, ac_descriptors):
         timbre['reverb'] = timbre['reverb'] == 1
         ac_descriptors.update(timbre)
     except Exception as e:
-        logger.debug('{0}: timbral models computation failed ("{1}")'.format(audiofile, e))
+        logger.error('{0}: timbral models computation failed ("{1}")'.format(audiofile, e))
 
 
 def ac_highlevel_music_description(audiofile, ac_descriptors):
@@ -359,7 +359,6 @@ def analyze(audiofile, outfile, compute_timbral_models=False, compute_descriptor
             output = ac_descriptors
         json.dump(output, open(outfile, 'w'), indent=4)
     else:
-        outfile = outfile + '.txt'
         file_contents = ''
         for key, value in ac_descriptors.items():
             file_contents += f'{key}={str(value)}\n'
@@ -380,23 +379,26 @@ if __name__ == '__main__':
     parser.add_argument('-s', '--music-samples', help='include descriptors designed for music samples', action='store_const', const=True, default=False)
     parser.add_argument('-i', '--input', help='input audio file or input directory containing the audio files to analyze', required=True)
     parser.add_argument('-o', '--output', help='output analysis file or output directory where the analysis files will be saved', required=True)
-    parser.add_argument('-f', '--format', help='format of the output analysis file ("json" or "jsonld", defaults to "jsonld")', default="jsonld")
+    parser.add_argument('-f', '--format', help='format of the output analysis file ("txt", "json" or "jsonld", defaults to "jsonld")', default="jsonld")
     parser.add_argument('-u', '--uri', help='URI for the analyzed sound (only used if "jsonld" format is chosen)', default=None)
     
     args = parser.parse_args()
     logging.basicConfig(format='%(asctime)s %(levelname)s:%(message)s', level=logging.INFO if not args.verbose else logging.DEBUG)
 
+    format_extensions = {"txt": ".txt", "json": ".json", "jsonld": ".jsonld"}
+
     # check if input and output arguments point to directories
     if os.path.isdir(args.input) and os.path.isdir(args.output):
         folder = args.input
-        input_files = [x for x in Path(folder).iterdir() if x.is_file()]
+        input_files = [x for x in Path(folder).iterdir() if x.is_file() and x.suffix.lower() not in ['.json', '.jsonld', '.txt']]
         for input_file in input_files:
-            output_file = os.path.join(args.output, '{}_analysis.json'.format(input_file.stem))
+            output_file = os.path.join(args.output, f'{input_file.stem}{format_extensions[args.format]}')
             analyze(str(input_file), output_file, args.timbral_models, args.music_pieces, args.music_samples, args.format, args.uri)
 
     # check if input argument points to a file
     elif os.path.isfile(args.input):
-        analyze(args.input, args.output, args.timbral_models, args.music_pieces, args.music_samples, args.format, args.uri)
+        output_file = f'{os.path.splitext(args.output)[0]}{format_extensions[args.format]}'
+        analyze(args.input, output_file, args.timbral_models, args.music_pieces, args.music_samples, args.format, args.uri)
 
     else:
         raise ArgumentTypeError('Make sure input and output arguments are both files or folders')

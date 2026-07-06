@@ -65,14 +65,19 @@ RUN pip install SoundFile librosa scipy ffmpeg-python
 RUN pip install rdflib rdflib-jsonld PyLD
 
 # Install timbral models
+# Also install numpy version pinned for timbral models to work
 RUN git clone https://github.com/AudioCommons/timbral_models.git \
     && cd timbral_models \
+    && git checkout 1aa6f639d7f781c08eee83caae89202f32b6333f \
     && pip install .
+RUN pip install numpy==1.26.4
 
 # Add high-level models and music extractor configuration
 RUN mkdir -p models
 ADD models /models
 ADD music_extractor_profile.yaml /
+
+ENV NUMBA_CACHE_DIR=/tmp
 
 # Add analysis script
 ADD analyze.py /
