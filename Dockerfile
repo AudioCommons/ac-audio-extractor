@@ -24,6 +24,7 @@ RUN apt-get update \
 RUN pip install numpy
 
 # Essentia
+# We do edit one of the lines to avoid the "completely silent" issue in the extractor
 RUN apt-get update \
     && apt-get install -y \
         build-essential \
@@ -39,6 +40,7 @@ RUN apt-get update \
         git \
     && mkdir /essentia && cd /essentia && git clone https://github.com/MTG/essentia.git \
     && cd /essentia/essentia \
+    && sed -i 's/if(stats.value<Real>("lowlevel.silence_rate_90dB.mean") == 1.0){/if(false){/' src/algorithms/extractor/freesoundextractor.cpp \
     && ./waf configure --with-examples --with-python \
     && ./waf && ./waf install && ldconfig \
     && apt-get remove -y \

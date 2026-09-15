@@ -392,8 +392,12 @@ if __name__ == '__main__':
         folder = args.input
         input_files = [x for x in Path(folder).iterdir() if x.is_file() and x.suffix.lower() not in ['.json', '.jsonld', '.txt']]
         for input_file in input_files:
-            output_file = os.path.join(args.output, f'{input_file.stem}{format_extensions[args.format]}')
-            analyze(str(input_file), output_file, args.timbral_models, args.music_pieces, args.music_samples, args.format, args.uri)
+            try:
+                output_file = os.path.join(args.output, f'{input_file.stem}{format_extensions[args.format]}')
+                analyze(str(input_file), output_file, args.timbral_models, args.music_pieces, args.music_samples, args.format, args.uri)
+            except Exception as e:
+                # Avoid stopping the entire process if one file fails
+                logger.error(f'Error analyzing file {input_file}: {e}')
 
     # check if input argument points to a file
     elif os.path.isfile(args.input):
